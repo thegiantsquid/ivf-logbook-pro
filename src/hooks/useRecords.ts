@@ -1,26 +1,12 @@
 
 import { useState, useEffect, useMemo } from 'react';
-import { 
-  collection, 
-  query, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  orderBy, 
-  where, 
-  Timestamp, 
-  serverTimestamp,
-  DocumentData
-} from 'firebase/firestore';
-import { db, handleFirebaseError } from '@/lib/firebase';
 import { IVFRecord, SortConfig, FilterConfig } from '@/types';
 import { toast } from '@/lib/toast';
 import { useAuth } from '@/context/AuthContext';
+import { supabase, handleSupabaseError } from '@/lib/supabase';
 import * as XLSX from 'xlsx';
 
-const RECORDS_COLLECTION = 'ivfRecords';
+const RECORDS_TABLE = 'ivf_records';
 
 export const useRecords = () => {
   const { currentUser } = useAuth();
@@ -38,23 +24,31 @@ export const useRecords = () => {
     setError(null);
     
     try {
-      const recordsRef = collection(db, RECORDS_COLLECTION);
-      const q = query(recordsRef, orderBy('createdAt', 'desc'));
-      const querySnapshot = await getDocs(q);
+      const { data, error } = await supabase
+        .from(RECORDS_TABLE)
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      const fetchedRecords: IVFRecord[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        fetchedRecords.push({
-          id: doc.id,
-          ...data,
-          date: data.date ? data.date : '', // Handle potential undefined
-        } as IVFRecord);
-      });
+      if (error) throw error;
+      
+      const fetchedRecords: IVFRecord[] = data.map(record => ({
+        id: record.id,
+        mrn: record.mrn || '',
+        date: record.date || '',
+        age: record.age || 0,
+        procedure: record.procedure || '',
+        supervision: record.supervision || '',
+        complicationNotes: record.complication_notes || '',
+        operationNotes: record.operation_notes || '',
+        hospital: record.hospital || '',
+        createdAt: record.created_at,
+        updatedAt: record.updated_at,
+        createdBy: record.created_by,
+      }));
       
       setRecords(fetchedRecords);
     } catch (error: any) {
-      setError(handleFirebaseError(error));
+      setError(handleSupabaseError(error));
     } finally {
       setLoading(false);
     }
@@ -72,23 +66,31 @@ export const useRecords = () => {
     if (!currentUser) return null;
     
     try {
-      const recordWithMeta = {
-        ...record,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        createdBy: currentUser.uid,
-      };
+      const { data, error } = await supabase
+        .from(RECORDS_TABLE)
+        .insert([{
+          mrn: record.mrn,
+          date: record.date,
+          age: record.age,
+          procedure: record.procedure,
+          supervision: record.supervision,
+          complication_notes: record.complicationNotes,
+          operation_notes: record.operationNotes,
+          hospital: record.hospital,
+          created_by: currentUser.uid,
+        }])
+        .select();
       
-      const docRef = await addDoc(collection(db, RECORDS_COLLECTION), recordWithMeta);
+      if (error) throw error;
       
       toast.success('Record added successfully');
       
       // Refresh records
       fetchRecords();
       
-      return docRef.id;
+      return data[0].id;
     } catch (error: any) {
-      handleFirebaseError(error);
+      handleSupabaseError(error);
       return null;
     }
   };
@@ -98,12 +100,21 @@ export const useRecords = () => {
     if (!currentUser) return false;
     
     try {
-      const recordRef = doc(db, RECORDS_COLLECTION, id);
+      const { error } = await supabase
+        .from(RECORDS_TABLE)
+        .update({
+          mrn: updates.mrn,
+          date: updates.date,
+          age: updates.age,
+          procedure: updates.procedure,
+          supervision: updates.supervision,
+          complication_notes: updates.complicationNotes,
+          operation_notes: updates.operationNotes,
+          hospital: updates.hospital,
+        })
+        .eq('id', id);
       
-      await updateDoc(recordRef, {
-        ...updates,
-        updatedAt: serverTimestamp(),
-      });
+      if (error) throw error;
       
       toast.success('Record updated successfully');
       
@@ -112,7 +123,7 @@ export const useRecords = () => {
       
       return true;
     } catch (error: any) {
-      handleFirebaseError(error);
+      handleSupabaseError(error);
       return false;
     }
   };
@@ -122,7 +133,12 @@ export const useRecords = () => {
     if (!currentUser) return false;
     
     try {
-      await deleteDoc(doc(db, RECORDS_COLLECTION, id));
+      const { error } = await supabase
+        .from(RECORDS_TABLE)
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
       
       toast.success('Record deleted successfully');
       
@@ -131,7 +147,7 @@ export const useRecords = () => {
       
       return true;
     } catch (error: any) {
-      handleFirebaseError(error);
+      handleSupabaseError(error);
       return false;
     }
   };
@@ -163,28 +179,25 @@ export const useRecords = () => {
             age: parseInt(row.age) || 0,
             procedure: row.procedure || '',
             supervision: row.supervision || '',
-            complicationNotes: row.complicationNotes || '',
-            operationNotes: row.operationNotes || '',
+            complication_notes: row.complicationNotes || '',
+            operation_notes: row.operationNotes || '',
             hospital: row.hospital || '',
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            createdBy: currentUser.uid,
+            created_by: currentUser.uid,
           }));
           
-          // Add all records to Firestore
-          const batch = [];
-          for (const record of formattedRecords) {
-            batch.push(addDoc(collection(db, RECORDS_COLLECTION), record));
-          }
+          // Add all records to Supabase
+          const { error } = await supabase
+            .from(RECORDS_TABLE)
+            .insert(formattedRecords);
           
-          await Promise.all(batch);
+          if (error) throw error;
           
           toast.success(`Imported ${formattedRecords.length} records successfully`);
           
           // Refresh records
           fetchRecords();
         } catch (error: any) {
-          handleFirebaseError(error);
+          handleSupabaseError(error);
         } finally {
           setLoading(false);
         }
@@ -192,7 +205,7 @@ export const useRecords = () => {
       
       reader.readAsArrayBuffer(file);
     } catch (error: any) {
-      handleFirebaseError(error);
+      handleSupabaseError(error);
       setLoading(false);
     }
   };
