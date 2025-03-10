@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useRecords } from '@/hooks/useRecords';
 import { 
@@ -38,12 +37,13 @@ import {
   getFilteredRowModel
 } from '@tanstack/react-table';
 import { IVFRecord } from '@/types';
-import { ChevronDown, Download, Trash, FileEdit, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
+import { ChevronDown, Download, Trash, FileEdit, ChevronLeft, ChevronRight, SlidersHorizontal, Database } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { generateTestRecords } from '@/utils/generateTestData';
 
 const ViewRecords: React.FC = () => {
-  const { records, loading, deleteRecord } = useRecords();
+  const { records, loading, deleteRecord, fetchRecords } = useRecords();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState<string>('');
@@ -61,11 +61,21 @@ const ViewRecords: React.FC = () => {
     complicationNotes: false,
     operationNotes: false,
   });
+  const [generatingRecords, setGeneratingRecords] = useState(false);
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this record?')) {
       await deleteRecord(id);
     }
+  };
+
+  const handleGenerateTestData = async () => {
+    setGeneratingRecords(true);
+    const success = await generateTestRecords(50);
+    if (success) {
+      fetchRecords();
+    }
+    setGeneratingRecords(false);
   };
 
   const columns: ColumnDef<IVFRecord>[] = useMemo(() => [
@@ -154,20 +164,15 @@ const ViewRecords: React.FC = () => {
     try {
       const doc = new jsPDF();
       
-      // Filter out action columns and respect column visibility
       const visibleColumns = columns.filter(col => {
-        // Skip action column
         if (col.id === 'actions') return false;
-        
-        // Check if column is visible
         if ('accessorKey' in col) {
           const key = col.accessorKey as string;
           return columnVisibility[key as keyof typeof columnVisibility];
         }
         return false;
       });
-      
-      // Extract column headers
+
       const tableColumn = visibleColumns.map(col => {
         if (typeof col.header === 'string') {
           return col.header;
@@ -176,8 +181,7 @@ const ViewRecords: React.FC = () => {
         }
         return col.id || '';
       });
-      
-      // Extract row data
+
       const tableRows = records.map(record => {
         return visibleColumns.map(col => {
           if ('accessorKey' in col) {
@@ -240,6 +244,14 @@ const ViewRecords: React.FC = () => {
                 className="max-w-sm"
               />
               <div className="flex gap-2">
+                <Button 
+                  onClick={handleGenerateTestData} 
+                  variant="outline" 
+                  disabled={generatingRecords}
+                >
+                  <Database className="mr-2 h-4 w-4" />
+                  {generatingRecords ? 'Generating...' : 'Generate 50 Test Records'}
+                </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="ml-auto">
@@ -307,7 +319,6 @@ const ViewRecords: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  // Loading state
                   Array(5).fill(0).map((_, index) => (
                     <TableRow key={index}>
                       {columns.map((column, colIndex) => (
