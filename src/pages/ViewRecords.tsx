@@ -24,7 +24,7 @@ import {
   DropdownMenuContent, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/lib/toast';
 import { 
   ColumnDef, 
   flexRender, 
@@ -111,6 +111,7 @@ const ViewRecords: React.FC = () => {
     },
     {
       id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => {
         const record = row.original;
         return (
@@ -154,13 +155,16 @@ const ViewRecords: React.FC = () => {
       const doc = new jsPDF();
       const tableColumn = columns
         .filter(col => col.id !== 'actions' && columnVisibility[col.accessorKey as keyof typeof columnVisibility])
-        .map(col => col.header);
+        .map(col => (typeof col.header === 'string' ? col.header : col.id));
       const tableRows = records.map(record => {
         return columns
           .filter(col => col.id !== 'actions' && columnVisibility[col.accessorKey as keyof typeof columnVisibility])
           .map(col => {
-            const key = col.accessorKey as keyof IVFRecord;
-            return record[key]?.toString() || '';
+            if (col.accessorKey) {
+              const key = col.accessorKey as keyof IVFRecord;
+              return record[key]?.toString() || '';
+            }
+            return '';
           });
       });
 

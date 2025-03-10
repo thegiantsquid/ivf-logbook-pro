@@ -16,7 +16,7 @@ import {
 } from 'firebase/firestore';
 import { db, handleFirebaseError } from '@/lib/firebase';
 import { IVFRecord, SortConfig, FilterConfig } from '@/types';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/lib/toast';
 import { useAuth } from '@/context/AuthContext';
 import * as XLSX from 'xlsx';
 

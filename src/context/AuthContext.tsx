@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { 
   User as FirebaseUser, 
@@ -8,7 +7,7 @@ import {
 } from 'firebase/auth';
 import { auth, googleProvider, handleFirebaseError } from '@/lib/firebase';
 import { User } from '@/types';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/lib/toast';
 
 interface AuthContextType {
   currentUser: User | null;

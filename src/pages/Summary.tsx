@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { useRecords } from '@/hooks/useRecords';
 import { 
@@ -14,7 +13,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/lib/toast';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#9146FF', '#FF6B8B'];
 

@@ -36,7 +36,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/lib/toast';
 import { IVFRecord, ProcedureType, SupervisionType, HospitalType } from '@/types';
 import { FileUp, FilePlus } from 'lucide-react';
 
