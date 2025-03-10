@@ -153,19 +153,39 @@ const ViewRecords: React.FC = () => {
   const exportToPDF = () => {
     try {
       const doc = new jsPDF();
-      const tableColumn = columns
-        .filter(col => col.id !== 'actions' && columnVisibility[col.accessorKey as keyof typeof columnVisibility])
-        .map(col => (typeof col.header === 'string' ? col.header : col.id));
+      
+      // Filter out action columns and respect column visibility
+      const visibleColumns = columns.filter(col => {
+        // Skip action column
+        if (col.id === 'actions') return false;
+        
+        // Check if column is visible
+        if ('accessorKey' in col) {
+          const key = col.accessorKey as string;
+          return columnVisibility[key as keyof typeof columnVisibility];
+        }
+        return false;
+      });
+      
+      // Extract column headers
+      const tableColumn = visibleColumns.map(col => {
+        if (typeof col.header === 'string') {
+          return col.header;
+        } else if ('accessorKey' in col) {
+          return col.accessorKey as string;
+        }
+        return col.id || '';
+      });
+      
+      // Extract row data
       const tableRows = records.map(record => {
-        return columns
-          .filter(col => col.id !== 'actions' && columnVisibility[col.accessorKey as keyof typeof columnVisibility])
-          .map(col => {
-            if (col.accessorKey) {
-              const key = col.accessorKey as keyof IVFRecord;
-              return record[key]?.toString() || '';
-            }
-            return '';
-          });
+        return visibleColumns.map(col => {
+          if ('accessorKey' in col) {
+            const key = col.accessorKey as keyof IVFRecord;
+            return record[key]?.toString() || '';
+          }
+          return '';
+        });
       });
 
       doc.setFontSize(20);
