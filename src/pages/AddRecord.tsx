@@ -38,16 +38,18 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/lib/toast';
 import { IVFRecord, ProcedureType, SupervisionType, HospitalType } from '@/types';
-import { FileUp, FilePlus } from 'lucide-react';
+import { FileUp, FilePlus, Plus } from 'lucide-react';
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 type FormValues = Omit<IVFRecord, 'id' | 'createdAt' | 'updatedAt' | 'createdBy'>;
-
-const procedures: ProcedureType[] = [
-  'Egg Collection',
-  'Embryo Transfer',
-  'Consultation',
-  'Other'
-];
 
 const supervisionTypes: SupervisionType[] = [
   'Direct',
@@ -56,17 +58,21 @@ const supervisionTypes: SupervisionType[] = [
   'Teaching'
 ];
 
-const hospitals: HospitalType[] = [
-  'General Hospital',
-  'Private Clinic',
-  'University Hospital',
-  'Other'
-];
-
 const AddRecord: React.FC = () => {
-  const { addRecord, importFromExcel } = useRecords();
+  const { 
+    addRecord, 
+    importFromExcel, 
+    customProcedureTypes, 
+    customHospitalTypes, 
+    addCustomProcedureType, 
+    addCustomHospitalType 
+  } = useRecords();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [newProcedureType, setNewProcedureType] = useState('');
+  const [newHospitalType, setNewHospitalType] = useState('');
+  const [isAddingProcedure, setIsAddingProcedure] = useState(false);
+  const [isAddingHospital, setIsAddingHospital] = useState(false);
   const navigate = useNavigate();
   
   const form = useForm<FormValues>({
@@ -74,11 +80,11 @@ const AddRecord: React.FC = () => {
       mrn: '',
       date: new Date().toISOString().split('T')[0],
       age: 30,
-      procedure: 'Egg Collection',
+      procedure: '',
       supervision: 'Direct',
       complicationNotes: '',
       operationNotes: '',
-      hospital: 'General Hospital',
+      hospital: '',
     },
   });
   
@@ -98,6 +104,38 @@ const AddRecord: React.FC = () => {
       toast.error('Failed to add record');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+  
+  const handleAddProcedureType = async () => {
+    if (!newProcedureType.trim()) {
+      toast.error('Please enter a procedure type');
+      return;
+    }
+    
+    const success = await addCustomProcedureType(newProcedureType);
+    
+    if (success) {
+      toast.success('Procedure type added successfully');
+      form.setValue('procedure', newProcedureType);
+      setNewProcedureType('');
+      setIsAddingProcedure(false);
+    }
+  };
+  
+  const handleAddHospitalType = async () => {
+    if (!newHospitalType.trim()) {
+      toast.error('Please enter a hospital type');
+      return;
+    }
+    
+    const success = await addCustomHospitalType(newHospitalType);
+    
+    if (success) {
+      toast.success('Hospital type added successfully');
+      form.setValue('hospital', newHospitalType);
+      setNewHospitalType('');
+      setIsAddingHospital(false);
     }
   };
   
@@ -213,24 +251,55 @@ const AddRecord: React.FC = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Procedure</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                            required
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select procedure" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {procedures.map(procedure => (
-                                <SelectItem key={procedure} value={procedure}>
-                                  {procedure}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <div className="flex gap-2">
+                            <Select 
+                              onValueChange={field.onChange} 
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select procedure" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {customProcedureTypes.map(procedure => (
+                                  <SelectItem key={procedure} value={procedure}>
+                                    {procedure}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Dialog open={isAddingProcedure} onOpenChange={setIsAddingProcedure}>
+                              <DialogTrigger asChild>
+                                <Button type="button" variant="outline" size="icon">
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Add New Procedure Type</DialogTitle>
+                                  <DialogDescription>
+                                    Create a new procedure type that will be saved for your future records.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="py-4">
+                                  <Input
+                                    placeholder="Enter procedure name"
+                                    value={newProcedureType}
+                                    onChange={(e) => setNewProcedureType(e.target.value)}
+                                  />
+                                </div>
+                                <DialogFooter>
+                                  <Button type="button" variant="outline" onClick={() => setIsAddingProcedure(false)}>
+                                    Cancel
+                                  </Button>
+                                  <Button type="button" onClick={handleAddProcedureType}>
+                                    Add Procedure
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -271,24 +340,55 @@ const AddRecord: React.FC = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Hospital</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                            required
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select hospital" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {hospitals.map(hospital => (
-                                <SelectItem key={hospital} value={hospital}>
-                                  {hospital}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <div className="flex gap-2">
+                            <Select 
+                              onValueChange={field.onChange} 
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select hospital" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {customHospitalTypes.map(hospital => (
+                                  <SelectItem key={hospital} value={hospital}>
+                                    {hospital}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Dialog open={isAddingHospital} onOpenChange={setIsAddingHospital}>
+                              <DialogTrigger asChild>
+                                <Button type="button" variant="outline" size="icon">
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Add New Hospital</DialogTitle>
+                                  <DialogDescription>
+                                    Create a new hospital that will be saved for your future records.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="py-4">
+                                  <Input
+                                    placeholder="Enter hospital name"
+                                    value={newHospitalType}
+                                    onChange={(e) => setNewHospitalType(e.target.value)}
+                                  />
+                                </div>
+                                <DialogFooter>
+                                  <Button type="button" variant="outline" onClick={() => setIsAddingHospital(false)}>
+                                    Cancel
+                                  </Button>
+                                  <Button type="button" onClick={handleAddHospitalType}>
+                                    Add Hospital
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}

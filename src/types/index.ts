@@ -21,9 +21,9 @@ export interface User {
   photoURL: string | null;
 }
 
-export type ProcedureType = 'Egg Collection' | 'Embryo Transfer' | 'Consultation' | 'Other';
+export type ProcedureType = string;
 export type SupervisionType = 'Direct' | 'Indirect' | 'Independent' | 'Teaching';
-export type HospitalType = 'General Hospital' | 'Private Clinic' | 'University Hospital' | 'Other';
+export type HospitalType = string;
 
 export interface ProcedureSummary {
   procedure: string;
@@ -42,4 +42,11 @@ export interface SortConfig {
 
 export interface FilterConfig {
   [key: string]: any;
+}
+
+export interface CustomTypeRecord {
+  id: string;
+  user_id: string;
+  type: string;
+  created_at: Date;
 }

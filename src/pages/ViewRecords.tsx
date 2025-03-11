@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useRecords } from '@/hooks/useRecords';
 import { 
@@ -37,10 +38,14 @@ import {
   getFilteredRowModel
 } from '@tanstack/react-table';
 import { IVFRecord } from '@/types';
-import { ChevronDown, Download, Trash, FileEdit, ChevronLeft, ChevronRight, SlidersHorizontal, Database } from 'lucide-react';
+import { ChevronDown, Download, Trash, FileEdit, ChevronLeft, ChevronRight, SlidersHorizontal, Database, Calendar } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { generateTestRecords } from '@/utils/generateTestData';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const ViewRecords: React.FC = () => {
   const { records, loading, deleteRecord, fetchRecords } = useRecords();
@@ -62,6 +67,8 @@ const ViewRecords: React.FC = () => {
     operationNotes: false,
   });
   const [generatingRecords, setGeneratingRecords] = useState(false);
+  const [fromDate, setFromDate] = useState<Date | undefined>(undefined);
+  const [toDate, setToDate] = useState<Date | undefined>(undefined);
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this record?')) {
@@ -138,8 +145,25 @@ const ViewRecords: React.FC = () => {
     },
   ], [deleteRecord]);
 
+  // Filter records by date range
+  const dateFilteredRecords = useMemo(() => {
+    if (!fromDate && !toDate) return records;
+    
+    return records.filter(record => {
+      const recordDate = new Date(record.date);
+      if (fromDate && toDate) {
+        return recordDate >= fromDate && recordDate <= toDate;
+      } else if (fromDate) {
+        return recordDate >= fromDate;
+      } else if (toDate) {
+        return recordDate <= toDate;
+      }
+      return true;
+    });
+  }, [records, fromDate, toDate]);
+
   const table = useReactTable({
-    data: records,
+    data: dateFilteredRecords,
     columns,
     state: {
       sorting,
@@ -182,11 +206,12 @@ const ViewRecords: React.FC = () => {
         return col.id || '';
       });
 
-      const tableRows = records.map(record => {
+      // Only export filtered and visible records
+      const tableRows = table.getFilteredRowModel().rows.map(row => {
         return visibleColumns.map(col => {
           if ('accessorKey' in col) {
             const key = col.accessorKey as keyof IVFRecord;
-            return record[key]?.toString() || '';
+            return row.original[key]?.toString() || '';
           }
           return '';
         });
@@ -196,11 +221,19 @@ const ViewRecords: React.FC = () => {
       doc.text('IVF Procedures Records', 14, 15);
       doc.setFontSize(10);
       doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
+      
+      // Add date filter information if active
+      if (fromDate || toDate) {
+        let dateRange = 'Date Range: ';
+        if (fromDate) dateRange += `From ${format(fromDate, 'yyyy-MM-dd')} `;
+        if (toDate) dateRange += `To ${format(toDate, 'yyyy-MM-dd')}`;
+        doc.text(dateRange, 14, 28);
+      }
 
       autoTable(doc, {
         head: [tableColumn],
         body: tableRows,
-        startY: 30,
+        startY: fromDate || toDate ? 34 : 30,
         styles: {
           fontSize: 8,
           cellPadding: 2,
@@ -216,6 +249,11 @@ const ViewRecords: React.FC = () => {
       console.error('Error exporting PDF:', error);
       toast.error('Failed to export PDF');
     }
+  };
+
+  const clearDateFilters = () => {
+    setFromDate(undefined);
+    setToDate(undefined);
   };
 
   return (
@@ -243,7 +281,59 @@ const ViewRecords: React.FC = () => {
                 onChange={e => setGlobalFilter(e.target.value)}
                 className="max-w-sm"
               />
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
+                <div className="flex gap-2">
+                  {/* From Date Picker */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="flex gap-2 whitespace-nowrap">
+                        <Calendar className="h-4 w-4" />
+                        {fromDate ? format(fromDate, "yyyy-MM-dd") : "From Date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={fromDate}
+                        onSelect={setFromDate}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+
+                  {/* To Date Picker */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="flex gap-2 whitespace-nowrap">
+                        <Calendar className="h-4 w-4" />
+                        {toDate ? format(toDate, "yyyy-MM-dd") : "To Date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={toDate}
+                        onSelect={setToDate}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+
+                  {/* Clear Filters Button */}
+                  {(fromDate || toDate) && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={clearDateFilters}
+                      className="whitespace-nowrap"
+                    >
+                      Clear Dates
+                    </Button>
+                  )}
+                </div>
+
                 <Button 
                   onClick={handleGenerateTestData} 
                   variant="outline" 

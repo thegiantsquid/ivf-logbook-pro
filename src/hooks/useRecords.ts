@@ -1,12 +1,14 @@
 
 import { useState, useEffect, useMemo } from 'react';
-import { IVFRecord, SortConfig, FilterConfig } from '@/types';
+import { IVFRecord, SortConfig, FilterConfig, ProcedureType, HospitalType } from '@/types';
 import { toast } from '@/lib/toast';
 import { useAuth } from '@/context/AuthContext';
 import { supabase, handleSupabaseError } from '@/lib/supabase';
 import * as XLSX from 'xlsx';
 
 const RECORDS_TABLE = 'ivf_records';
+const USER_PROCEDURE_TYPES_TABLE = 'user_procedure_types';
+const USER_HOSPITAL_TYPES_TABLE = 'user_hospital_types';
 
 export const useRecords = () => {
   const { currentUser } = useAuth();
@@ -15,6 +17,8 @@ export const useRecords = () => {
   const [error, setError] = useState<string | null>(null);
   const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'date', direction: 'desc' });
   const [filters, setFilters] = useState<FilterConfig>({});
+  const [customProcedureTypes, setCustomProcedureTypes] = useState<ProcedureType[]>([]);
+  const [customHospitalTypes, setCustomHospitalTypes] = useState<HospitalType[]>([]);
 
   // Fetch records
   const fetchRecords = async () => {
@@ -53,11 +57,117 @@ export const useRecords = () => {
       setLoading(false);
     }
   };
+  
+  // Fetch user's custom procedure types
+  const fetchUserProcedureTypes = async () => {
+    if (!currentUser) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from(USER_PROCEDURE_TYPES_TABLE)
+        .select('type')
+        .eq('user_id', currentUser.uid);
+        
+      if (error) throw error;
+      
+      const procedureTypes: ProcedureType[] = data.map(item => item.type);
+      setCustomProcedureTypes(procedureTypes);
+    } catch (error: any) {
+      console.error('Error fetching custom procedure types:', error);
+    }
+  };
+  
+  // Fetch user's custom hospital types
+  const fetchUserHospitalTypes = async () => {
+    if (!currentUser) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from(USER_HOSPITAL_TYPES_TABLE)
+        .select('type')
+        .eq('user_id', currentUser.uid);
+        
+      if (error) throw error;
+      
+      const hospitalTypes: HospitalType[] = data.map(item => item.type);
+      setCustomHospitalTypes(hospitalTypes);
+    } catch (error: any) {
+      console.error('Error fetching custom hospital types:', error);
+    }
+  };
+  
+  // Add custom procedure type
+  const addCustomProcedureType = async (type: string) => {
+    if (!currentUser) return false;
+    
+    try {
+      // Check if type already exists for this user
+      const { data: existingTypes } = await supabase
+        .from(USER_PROCEDURE_TYPES_TABLE)
+        .select('*')
+        .eq('user_id', currentUser.uid)
+        .eq('type', type);
+        
+      if (existingTypes && existingTypes.length > 0) {
+        // Type already exists, no need to add it again
+        return true;
+      }
+      
+      // Add the new type
+      const { error } = await supabase
+        .from(USER_PROCEDURE_TYPES_TABLE)
+        .insert([{ user_id: currentUser.uid, type }]);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setCustomProcedureTypes([...customProcedureTypes, type as ProcedureType]);
+      return true;
+    } catch (error: any) {
+      handleSupabaseError(error);
+      return false;
+    }
+  };
+  
+  // Add custom hospital type
+  const addCustomHospitalType = async (type: string) => {
+    if (!currentUser) return false;
+    
+    try {
+      // Check if type already exists for this user
+      const { data: existingTypes } = await supabase
+        .from(USER_HOSPITAL_TYPES_TABLE)
+        .select('*')
+        .eq('user_id', currentUser.uid)
+        .eq('type', type);
+        
+      if (existingTypes && existingTypes.length > 0) {
+        // Type already exists, no need to add it again
+        return true;
+      }
+      
+      // Add the new type
+      const { error } = await supabase
+        .from(USER_HOSPITAL_TYPES_TABLE)
+        .insert([{ user_id: currentUser.uid, type }]);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setCustomHospitalTypes([...customHospitalTypes, type as HospitalType]);
+      return true;
+    } catch (error: any) {
+      handleSupabaseError(error);
+      return false;
+    }
+  };
 
   // Initial fetch
   useEffect(() => {
     if (currentUser) {
       fetchRecords();
+      fetchUserProcedureTypes();
+      fetchUserHospitalTypes();
     }
   }, [currentUser]);
 
@@ -66,6 +176,16 @@ export const useRecords = () => {
     if (!currentUser) return null;
     
     try {
+      // If this is a new procedure type for the user, add it
+      if (record.procedure && !customProcedureTypes.includes(record.procedure as ProcedureType)) {
+        await addCustomProcedureType(record.procedure);
+      }
+      
+      // If this is a new hospital type for the user, add it
+      if (record.hospital && !customHospitalTypes.includes(record.hospital as HospitalType)) {
+        await addCustomHospitalType(record.hospital);
+      }
+      
       const { data, error } = await supabase
         .from(RECORDS_TABLE)
         .insert([{
@@ -260,5 +380,10 @@ export const useRecords = () => {
     setSortConfig,
     sortConfig,
     filters,
+    // Add the new functions and state for custom types
+    customProcedureTypes,
+    customHospitalTypes,
+    addCustomProcedureType,
+    addCustomHospitalType,
   };
 };
