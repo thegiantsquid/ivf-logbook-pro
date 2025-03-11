@@ -12,6 +12,8 @@ import Dashboard from "@/pages/Dashboard";
 import ViewRecords from "@/pages/ViewRecords";
 import AddRecord from "@/pages/AddRecord";
 import Summary from "@/pages/Summary";
+import Profile from "@/pages/Profile";
+import Settings from "@/pages/Settings";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +33,8 @@ const App = () => (
               <Route path="/records" element={<ViewRecords />} />
               <Route path="/add-record" element={<AddRecord />} />
               <Route path="/summary" element={<Summary />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
             
             <Route path="*" element={<NotFound />} />
