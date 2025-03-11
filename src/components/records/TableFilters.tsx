@@ -26,7 +26,7 @@ interface TableFiltersProps {
   exportToPDF: () => void;
   generatingRecords: boolean;
   columnVisibility: Record<string, boolean>;
-  setColumnVisibility: (visibility: Record<string, boolean>) => void;
+  setColumnVisibility: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }
 
 const TableFilters: React.FC<TableFiltersProps> = ({ 
@@ -126,10 +126,10 @@ const TableFilters: React.FC<TableFiltersProps> = ({
                 className="capitalize"
                 checked={columnVisibility[key as keyof typeof columnVisibility]}
                 onCheckedChange={(value) =>
-                  setColumnVisibility({
-                    ...columnVisibility,
+                  setColumnVisibility((prev) => ({
+                    ...prev,
                     [key]: value,
-                  })
+                  }))
                 }
               >
                 {key === 'mrn' ? 'MRN' : key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
