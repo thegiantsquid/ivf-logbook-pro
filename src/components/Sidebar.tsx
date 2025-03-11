@@ -13,7 +13,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, FilePlus, FileSearch, BarChart, Info } from 'lucide-react';
+import { LayoutDashboard, FilePlus, FileSearch, BarChart, Info, User, Settings } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
   return (
@@ -78,6 +78,37 @@ const Sidebar: React.FC = () => {
                   >
                     <BarChart className="w-5 h-5" />
                     <span>Summary</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <SidebarGroup>
+          <SidebarGroupLabel>User</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink 
+                    to="/profile" 
+                    className={({ isActive }) => isActive ? 'text-primary bg-primary/5' : ''}
+                  >
+                    <User className="w-5 h-5" />
+                    <span>Profile</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink 
+                    to="/settings" 
+                    className={({ isActive }) => isActive ? 'text-primary bg-primary/5' : ''}
+                  >
+                    <Settings className="w-5 h-5" />
+                    <span>Settings</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
