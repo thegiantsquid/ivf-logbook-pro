@@ -30,9 +30,9 @@ const Layout: React.FC = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full overflow-hidden">
         <Sidebar />
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col w-full overflow-hidden">
           <Navbar />
           <main className="flex-1 overflow-y-auto bg-gray-50/50 p-4 md:p-8">
             <div className="page-transition max-w-7xl mx-auto">
