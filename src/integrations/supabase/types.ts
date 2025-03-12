@@ -54,6 +54,65 @@ export type Database = {
         }
         Relationships: []
       }
+      milestone_types: {
+        Row: {
+          badge_name: string
+          created_at: string
+          description: string
+          id: string
+          milestone_count: number
+          procedure: string
+        }
+        Insert: {
+          badge_name: string
+          created_at?: string
+          description: string
+          id?: string
+          milestone_count: number
+          procedure: string
+        }
+        Update: {
+          badge_name?: string
+          created_at?: string
+          description?: string
+          id?: string
+          milestone_count?: number
+          procedure?: string
+        }
+        Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achieved_at: string
+          id: string
+          is_seen: boolean
+          milestone_type_id: string
+          user_id: string
+        }
+        Insert: {
+          achieved_at?: string
+          id?: string
+          is_seen?: boolean
+          milestone_type_id: string
+          user_id: string
+        }
+        Update: {
+          achieved_at?: string
+          id?: string
+          is_seen?: boolean
+          milestone_type_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_milestone_type_id_fkey"
+            columns: ["milestone_type_id"]
+            isOneToOne: false
+            referencedRelation: "milestone_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_hospital_types: {
         Row: {
           created_at: string

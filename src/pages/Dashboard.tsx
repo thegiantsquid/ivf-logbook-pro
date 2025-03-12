@@ -2,13 +2,23 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useRecords } from '@/hooks/useRecords';
+import { useMilestones } from '@/hooks/useMilestones';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FilePlus, FileSearch, BarChart } from 'lucide-react';
+import { FilePlus, FileSearch, BarChart, Award } from 'lucide-react';
+import MilestoneProgress from '@/components/milestones/MilestoneProgress';
+import AchievementNotification from '@/components/milestones/AchievementNotification';
+import AchievementBadge from '@/components/milestones/AchievementBadge';
+import { Separator } from '@/components/ui/separator';
 import { ProcedureType } from '@/types';
 
 const Dashboard: React.FC = () => {
   const { records, loading } = useRecords();
+  const { 
+    newAchievements, 
+    userAchievements, 
+    markAchievementAsSeen 
+  } = useMilestones();
   
   const stats = useMemo(() => {
     if (!records.length) return {
@@ -75,6 +85,45 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
       
+      {/* New Achievements Section */}
+      {newAchievements.length > 0 && (
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {newAchievements.map(achievement => (
+            <AchievementNotification
+              key={achievement.id}
+              achievement={achievement}
+              onDismiss={() => markAchievementAsSeen(achievement.id)}
+            />
+          ))}
+        </div>
+      )}
+      
+      {/* Achievements Badge Row */}
+      {userAchievements.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Award className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-medium">Your Achievements</h3>
+          </div>
+          <div className="flex flex-wrap gap-2 p-2 bg-muted/30 rounded-md">
+            {userAchievements
+              .sort((a, b) => a.is_seen === b.is_seen ? 0 : a.is_seen ? 1 : -1)
+              .map(achievement => (
+                <AchievementBadge
+                  key={achievement.id}
+                  achievement={achievement}
+                  onClick={() => {
+                    if (!achievement.is_seen) {
+                      markAchievementAsSeen(achievement.id);
+                    }
+                  }}
+                />
+              ))
+            }
+          </div>
+        </div>
+      )}
+      
       {/* Stats Row */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="glass-card">
@@ -113,6 +162,13 @@ const Dashboard: React.FC = () => {
           </Card>
         ))}
       </div>
+      
+      {/* Milestone Progress */}
+      <div>
+        <MilestoneProgress />
+      </div>
+      
+      <Separator />
       
       {/* Quick Actions */}
       <div className="grid gap-4 grid-cols-1 md:grid-cols-3">

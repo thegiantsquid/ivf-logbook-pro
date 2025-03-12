@@ -50,3 +50,29 @@ export interface CustomTypeRecord {
   type: string;
   created_at: Date;
 }
+
+// Milestone Types
+export interface MilestoneType {
+  id: string;
+  procedure: string;
+  milestone_count: number;
+  badge_name: string;
+  description: string;
+  created_at?: Date;
+}
+
+export interface UserAchievement {
+  id: string;
+  user_id: string;
+  milestone_type_id: string;
+  achieved_at: Date;
+  is_seen: boolean;
+  milestoneType?: MilestoneType;
+}
+
+export interface MilestoneProgress {
+  procedure: string;
+  currentCount: number;
+  nextMilestone?: MilestoneType;
+  achievements: UserAchievement[];
+}
