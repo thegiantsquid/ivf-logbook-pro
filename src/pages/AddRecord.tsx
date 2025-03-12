@@ -48,6 +48,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { TrialBanner } from '@/components/subscription/TrialBanner';
 
 type FormValues = Omit<IVFRecord, 'id' | 'createdAt' | 'updatedAt' | 'createdBy'>;
 
@@ -165,7 +166,6 @@ const AddRecord: React.FC = () => {
   const [isAddingProcedure, setIsAddingProcedure] = useState(false);
   const [isAddingHospital, setIsAddingHospital] = useState(false);
 
-  // If user has no access, show subscription required message
   if (!isLoading && !hasActiveSubscription && !isInTrialPeriod) {
     return (
       <div className="space-y-6">
@@ -192,7 +192,7 @@ const AddRecord: React.FC = () => {
             </ul>
           </CardContent>
           <CardFooter>
-            <Button onClick={() => navigate('/settings')}>
+            <Button onClick={() => navigate('/subscribe')}>
               View Subscription Options
             </Button>
           </CardFooter>
@@ -201,30 +201,9 @@ const AddRecord: React.FC = () => {
     );
   }
 
-  // Show trial period banner if user is in trial
-  const TrialBanner = isInTrialPeriod && trialEndsAt && (
-    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-      <div className="flex">
-        <div className="flex-shrink-0">
-          <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-          </svg>
-        </div>
-        <div className="ml-3">
-          <p className="text-sm text-yellow-700">
-            Trial period ends in {Math.ceil((trialEndsAt.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days. 
-            <a href="/settings" className="font-medium underline text-yellow-700 hover:text-yellow-600 ml-1">
-              Subscribe now
-            </a>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-6">
-      {TrialBanner}
+      <TrialBanner />
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Add IVF Record</h2>
         <p className="text-muted-foreground mt-1">

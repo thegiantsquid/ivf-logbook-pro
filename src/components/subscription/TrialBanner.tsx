@@ -18,7 +18,7 @@ export const TrialBanner = () => {
   const progress = Math.max(0, Math.min(100, ((totalTrialDays - daysLeft) / totalTrialDays) * 100));
 
   return (
-    <div className="bg-card p-4 rounded-lg border shadow-sm mb-8">
+    <div className="bg-card p-4 rounded-lg border shadow-sm mb-6">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <Timer className="h-5 w-5 text-primary" />
