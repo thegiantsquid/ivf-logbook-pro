@@ -1,10 +1,10 @@
-
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useRecords } from '@/hooks/useRecords';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FilePlus, FileSearch, BarChart } from 'lucide-react';
+import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { ProcedureType } from '@/types';
 
 const Dashboard: React.FC = () => {
@@ -74,6 +74,8 @@ const Dashboard: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      <TrialBanner />
       
       {/* Stats Row */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
