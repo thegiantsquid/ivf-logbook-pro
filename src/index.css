@@ -18,6 +18,7 @@
 
     --primary: 210 100% 50%;
     --primary-foreground: 210 40% 98%;
+    --primary-rgb: 0, 102, 255;
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222 47% 11.2%;
@@ -45,6 +46,12 @@
     --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 214.3 31.8% 91.4%;
     --sidebar-ring: 221.2 83.2% 53.3%;
+
+    /* Neumorphic shadow variables */
+    --shadow-light: 255, 255, 255;
+    --shadow-dark: 0, 0, 0;
+    --shadow-light-opacity: 0.7;
+    --shadow-dark-opacity: 0.03;
   }
 
   .dark {
@@ -59,6 +66,7 @@
 
     --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 222.2 47.4% 11.2%;
+    --primary-rgb: 65, 105, 225;
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -84,6 +92,12 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217.2 32.6% 17.5%;
     --sidebar-ring: 224.3 76.3% 48%;
+
+    /* Neumorphic shadow variables for dark mode */
+    --shadow-light: 40, 40, 45;
+    --shadow-dark: 10, 10, 15;
+    --shadow-light-opacity: 0.2;
+    --shadow-dark-opacity: 0.4;
   }
 }
 
@@ -98,7 +112,7 @@
   }
   
   .glass-card {
-    @apply bg-white/80 backdrop-blur-md rounded-lg border border-white/20 shadow-sm;
+    @apply bg-white/80 backdrop-blur-md rounded-lg border border-white/20 shadow-sm transition-all duration-300 hover:shadow-md;
   }
   
   .shimmer {
@@ -115,6 +129,30 @@
   
   .sidebar-transition {
     @apply animate-slide-in-from-left;
+  }
+  
+  .neumorphic-card {
+    @apply bg-card rounded-xl border border-white/20 transition-all duration-300;
+    box-shadow: 
+      5px 5px 10px rgba(var(--shadow-dark), var(--shadow-dark-opacity)),
+      -5px -5px 10px rgba(var(--shadow-light), var(--shadow-light-opacity));
+  }
+  
+  .neumorphic-button {
+    @apply transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0;
+    box-shadow: 
+      3px 3px 6px rgba(var(--shadow-dark), var(--shadow-dark-opacity)),
+      -3px -3px 6px rgba(var(--shadow-light), var(--shadow-light-opacity));
+  }
+  
+  .neumorphic-button:active {
+    box-shadow: 
+      inset 2px 2px 4px rgba(var(--shadow-dark), var(--shadow-dark-opacity)),
+      inset -2px -2px 4px rgba(var(--shadow-light), var(--shadow-light-opacity));
+  }
+  
+  .neumorphic-input {
+    @apply bg-card/50 border border-white/10 focus:border-primary/20 focus:ring-2 focus:ring-primary/10 transition-all duration-200;
   }
 }
 

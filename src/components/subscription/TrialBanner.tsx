@@ -18,20 +18,35 @@ export const TrialBanner = () => {
   const progress = Math.max(0, Math.min(100, ((totalTrialDays - daysLeft) / totalTrialDays) * 100));
 
   return (
-    <div className="bg-card p-4 rounded-lg border shadow-sm mb-6">
-      <div className="flex items-center justify-between mb-2">
+    <div className="bg-card/80 backdrop-blur-sm p-5 rounded-xl border border-primary/10 shadow-sm mb-6 transition-all duration-300 hover:shadow-md animate-fade-in">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Timer className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Free Trial Period</h3>
+          <div className="p-2 rounded-full bg-primary/10 text-primary animate-pulse-subtle">
+            <Timer className="h-4 w-4" />
+          </div>
+          <h3 className="font-semibold text-sm tracking-tight">Free Trial Period</h3>
         </div>
-        <Button asChild variant="outline" size="sm">
+        <Button 
+          asChild 
+          variant="outline" 
+          size="sm"
+          className="transition-all duration-300 hover:scale-105 hover:bg-primary/10 hover:border-primary/20"
+        >
           <Link to="/subscribe">Subscribe Now</Link>
         </Button>
       </div>
       <div className="space-y-2">
-        <Progress value={progress} className="h-2" />
-        <p className="text-sm text-muted-foreground">
-          {daysLeft} {daysLeft === 1 ? 'day' : 'days'} left in your trial
+        <Progress 
+          value={progress} 
+          className="h-2 bg-secondary/50 overflow-hidden"
+        />
+        <p className="text-xs text-muted-foreground flex justify-between items-center">
+          <span className="animate-slide-in-from-left">
+            {daysLeft} {daysLeft === 1 ? 'day' : 'days'} left in your trial
+          </span>
+          <span className="text-xs text-primary/70 font-medium animate-slide-in-from-right">
+            {Math.round(progress)}% complete
+          </span>
         </p>
       </div>
     </div>

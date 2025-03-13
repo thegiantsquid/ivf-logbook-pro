@@ -87,12 +87,28 @@ export default {
 					to: { transform: 'translateY(0)', opacity: '1' }
 				},
 				slideInFromLeft: {
-					from: { transform: 'translateX(-20px)', opacity: '0' },
+					from: { transform: 'translateX(-10px)', opacity: '0' },
+					to: { transform: 'translateX(0)', opacity: '1' }
+				},
+				slideInFromRight: {
+					from: { transform: 'translateX(10px)', opacity: '0' },
 					to: { transform: 'translateX(0)', opacity: '1' }
 				},
 				shimmer: {
 					from: { backgroundPosition: '200% 0' },
 					to: { backgroundPosition: '-200% 0' }
+				},
+				'pulse-subtle': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.8' }
+				},
+				float: {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-5px)' }
+				},
+				'scale-subtle': {
+					'0%, 100%': { transform: 'scale(1)' },
+					'50%': { transform: 'scale(1.03)' }
 				}
 			},
 			animation: {
@@ -101,7 +117,11 @@ export default {
 				'fade-in': 'fadeIn 0.5s ease-out',
 				'slide-in-from-top': 'slideInFromTop 0.4s ease-out',
 				'slide-in-from-left': 'slideInFromLeft 0.3s ease-out',
-				'shimmer': 'shimmer 2s infinite linear'
+				'slide-in-from-right': 'slideInFromRight 0.3s ease-out',
+				'shimmer': 'shimmer 2s infinite linear',
+				'pulse-subtle': 'pulse-subtle 3s ease-in-out infinite',
+				'float': 'float 3s ease-in-out infinite',
+				'scale-subtle': 'scale-subtle 3s ease-in-out infinite'
 			}
 		}
 	},
