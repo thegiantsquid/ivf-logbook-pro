@@ -8,8 +8,7 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Trash, FileEdit } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { IVFRecord } from '@/types';
 import { 
   ColumnDef, 
@@ -22,13 +21,17 @@ interface RecordsTableProps {
   columns: ColumnDef<IVFRecord>[];
   loading: boolean;
   handleDelete: (id: string) => void;
+  selectedRows: string[];
+  toggleRowSelection: (id: string) => void;
 }
 
 const RecordsTable: React.FC<RecordsTableProps> = ({ 
   table, 
   columns, 
   loading, 
-  handleDelete 
+  handleDelete,
+  selectedRows,
+  toggleRowSelection
 }) => {
   return (
     <div className="rounded-md border">
@@ -36,6 +39,9 @@ const RecordsTable: React.FC<RecordsTableProps> = ({
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
+              <TableHead className="w-[40px] px-2">
+                <span className="sr-only">Select</span>
+              </TableHead>
               {headerGroup.headers.map((header) => (
                 <TableHead key={header.id}>
                   {header.isPlaceholder ? null : (
@@ -66,6 +72,9 @@ const RecordsTable: React.FC<RecordsTableProps> = ({
           {loading ? (
             Array(5).fill(0).map((_, index) => (
               <TableRow key={index}>
+                <TableCell className="w-[40px] px-2">
+                  <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                </TableCell>
                 {columns.map((column, colIndex) => (
                   <TableCell key={colIndex}>
                     <div className="h-4 bg-gray-200 rounded animate-pulse w-full max-w-[100px]"></div>
@@ -75,7 +84,17 @@ const RecordsTable: React.FC<RecordsTableProps> = ({
             ))
           ) : table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow 
+                key={row.id} 
+                className={selectedRows.includes(row.original.id || '') ? 'bg-muted/70' : ''}
+              >
+                <TableCell className="w-[40px] px-2">
+                  <Checkbox 
+                    checked={selectedRows.includes(row.original.id || '')}
+                    onCheckedChange={() => toggleRowSelection(row.original.id || '')} 
+                    aria-label={`Select record ${row.original.mrn}`}
+                  />
+                </TableCell>
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -85,7 +104,7 @@ const RecordsTable: React.FC<RecordsTableProps> = ({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
+              <TableCell colSpan={columns.length + 1} className="h-24 text-center">
                 No records found.
               </TableCell>
             </TableRow>

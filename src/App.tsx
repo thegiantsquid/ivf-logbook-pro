@@ -1,49 +1,65 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/context/AuthContext";
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from 'next-themes';
+import { TooltipProvider } from '@radix-ui/react-tooltip';
 
-import Layout from "@/components/Layout";
-import LoginPage from "@/components/auth/LoginPage";
-import Dashboard from "@/pages/Dashboard";
-import ViewRecords from "@/pages/ViewRecords";
-import AddRecord from "@/pages/AddRecord";
-import Summary from "@/pages/Summary";
-import Profile from "@/pages/Profile";
-import Settings from "@/pages/Settings";
-import NotFound from "@/pages/NotFound";
-import Subscribe from "@/pages/Subscribe";
+// Components
+import { Toaster } from '@/components/ui/sonner';
+import Layout from '@/components/Layout';
+import LoginPage from '@/components/auth/LoginPage';
+
+// Context
+import { AuthProvider } from '@/context/AuthContext';
+
+// Pages
+import Dashboard from '@/pages/Dashboard';
+import AddRecord from '@/pages/AddRecord';
+import ViewRecords from '@/pages/ViewRecords';
+import EditRecord from '@/pages/EditRecord';
+import Profile from '@/pages/Profile';
+import Summary from '@/pages/Summary';
+import Settings from '@/pages/Settings';
+import NotFound from '@/pages/NotFound';
+import Index from '@/pages/Index';
+import Subscribe from '@/pages/Subscribe';
+
+// Style
+import './App.css';
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <TooltipProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <TooltipProvider>
+                <Routes>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/" element={<Layout />}>
+                    <Route index element={<Index />} />
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="records" element={<ViewRecords />} />
+                    <Route path="records/edit/:id" element={<EditRecord />} />
+                    <Route path="add-record" element={<AddRecord />} />
+                    <Route path="summary" element={<Summary />} />
+                    <Route path="profile" element={<Profile />} />
+                    <Route path="settings" element={<Settings />} />
+                    <Route path="subscribe" element={<Subscribe />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Route>
+                </Routes>
+              </TooltipProvider>
+            </BrowserRouter>
+          </AuthProvider>
+        </TooltipProvider>
         <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            
-            <Route element={<Layout />}>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/records" element={<ViewRecords />} />
-              <Route path="/add-record" element={<AddRecord />} />
-              <Route path="/summary" element={<Summary />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/subscribe" element={<Subscribe />} />
-            </Route>
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;

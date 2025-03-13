@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { generateTestRecords } from '@/utils/generateTestData';
 import { 
   Card, 
@@ -18,6 +19,9 @@ import {
   getPaginationRowModel, 
   useReactTable
 } from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Trash, FileEdit } from 'lucide-react';
+import { toast } from '@/lib/toast';
 
 // Custom hooks and components
 import { useRecordsData } from '@/components/records/useRecordsData';
@@ -28,6 +32,7 @@ import TableActions from '@/components/records/TableActions';
 import TableFilters from '@/components/records/TableFilters';
 
 const ViewRecords: React.FC = () => {
+  const navigate = useNavigate();
   // State for table configuration
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -45,6 +50,7 @@ const ViewRecords: React.FC = () => {
     complicationNotes: false,
     operationNotes: false,
   });
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
   // Custom hooks for data management
   const { 
@@ -63,8 +69,24 @@ const ViewRecords: React.FC = () => {
     setGlobalFilter
   } = useRecordsData();
   
-  const columns = useTableColumns(handleDelete);
+  const columns = useTableColumns();
   const { exportToPDF } = usePDFExport();
+
+  // Handle row selection
+  const toggleRowSelection = (id: string) => {
+    setSelectedRows(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(rowId => rowId !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
+  // Clear selection when data changes
+  useEffect(() => {
+    setSelectedRows([]);
+  }, [dateFilteredRecords]);
 
   // Handle test data generation
   const handleGenerateTestData = async () => {
@@ -85,6 +107,40 @@ const ViewRecords: React.FC = () => {
       fromDate,
       toDate
     );
+  };
+
+  // Handle editing a record
+  const handleEdit = () => {
+    if (selectedRows.length !== 1) {
+      toast.error('Please select exactly one record to edit');
+      return;
+    }
+    
+    // Navigate to edit page with the selected record ID
+    navigate(`/records/edit/${selectedRows[0]}`);
+  };
+
+  // Handle deleting multiple records
+  const handleDeleteSelected = () => {
+    if (selectedRows.length === 0) {
+      toast.error('Please select at least one record to delete');
+      return;
+    }
+
+    if (window.confirm(`Are you sure you want to delete ${selectedRows.length} record(s)?`)) {
+      // Delete all selected records one by one
+      const deletePromises = selectedRows.map(id => handleDelete(id));
+      
+      Promise.all(deletePromises)
+        .then(() => {
+          toast.success(`${selectedRows.length} record(s) deleted successfully`);
+          setSelectedRows([]);
+        })
+        .catch(error => {
+          toast.error('Error deleting records');
+          console.error(error);
+        });
+    }
   };
 
   // Set up the table
@@ -143,13 +199,39 @@ const ViewRecords: React.FC = () => {
               setColumnVisibility={setColumnVisibility}
             />
           </div>
+
+          {/* Row action buttons */}
+          <div className="flex items-center gap-2 mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleEdit}
+              disabled={selectedRows.length !== 1 || loading}
+              className="transition-all duration-300 ease-in-out"
+            >
+              <FileEdit className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDeleteSelected}
+              disabled={selectedRows.length === 0 || loading}
+              className="text-red-500 hover:text-red-700 transition-all duration-300 ease-in-out"
+            >
+              <Trash className="h-4 w-4 mr-2" />
+              Delete {selectedRows.length > 0 && `(${selectedRows.length})`}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <RecordsTable 
             table={table} 
             columns={columns} 
             loading={loading} 
-            handleDelete={handleDelete} 
+            handleDelete={handleDelete}
+            selectedRows={selectedRows}
+            toggleRowSelection={toggleRowSelection}
           />
           <TableActions table={table} loading={loading} />
         </CardContent>
