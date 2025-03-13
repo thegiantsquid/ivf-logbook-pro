@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useRecords } from '@/hooks/useRecords';
@@ -11,7 +12,7 @@ const Dashboard: React.FC = () => {
   const { records, loading } = useRecords();
   
   const stats = useMemo(() => {
-    if (!records.length) return {
+    if (!records || !records.length) return {
       totalRecords: 0,
       recentRecords: [],
       procedureCounts: {},
