@@ -2,10 +2,11 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useRecords } from '@/hooks/useRecords';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Plus } from 'lucide-react';
+import { FilePlus, FileSearch, BarChart } from 'lucide-react';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
+import { ProcedureType } from '@/types';
 
 const Dashboard: React.FC = () => {
   const { records, loading } = useRecords();
@@ -44,123 +45,189 @@ const Dashboard: React.FC = () => {
       hospitalCounts,
     };
   }, [records]);
-
-  // Get patient status (for demo purposes)
-  const getPatientStatus = (index: number) => {
-    const statuses = ['stable', 'review', 'critical', 'stable', 'stable'];
-    return statuses[index % statuses.length];
-  };
   
-  // Get status text
-  const getStatusText = (status: string) => {
-    const statusMap: Record<string, string> = {
-      'stable': 'Stable',
-      'review': 'Review',
-      'critical': 'Critical'
-    };
-    return statusMap[status] || 'Stable';
-  };
+  // Get top procedures
+  const topProcedures = useMemo(() => {
+    if (!stats.procedureCounts) return [];
+    
+    return Object.entries(stats.procedureCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([name, count]) => ({ name, count }));
+  }, [stats.procedureCounts]);
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-        {/* Recent Patients Card */}
-        <div className="lg:col-span-2">
-          <Card className="bg-white shadow-sm border-gray-100">
-            <CardHeader className="pb-2 flex justify-between items-start">
-              <CardTitle className="text-lg font-semibold text-gray-800">Recent Patients</CardTitle>
-              <div className="flex space-x-1">
-                {Array(3).fill(0).map((_, i) => (
-                  <div 
-                    key={i} 
-                    className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-primary' : 'bg-gray-200'}`}
-                  />
-                ))}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="space-y-4">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="animate-pulse flex items-center p-3">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                      <div className="ml-3 flex-1">
-                        <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : stats.recentRecords.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <p>No patient records found</p>
-                </div>
-              ) : (
-                <div className="divide-y">
-                  {stats.recentRecords.map((record, index) => (
-                    <div key={record.id} className="patient-card group">
-                      <div className="patient-avatar">
-                        {record.mrn.substring(0, 2)}
-                      </div>
-                      <div className="patient-info">
-                        <div className="flex justify-between">
-                          <h3 className="patient-name">{`Patient ${record.mrn}`}</h3>
-                          <span className={`status-tag status-${getPatientStatus(index)}`}>
-                            {getStatusText(getPatientStatus(index))}
-                          </span>
-                        </div>
-                        <p className="patient-details">
-                          {`${record.procedure} • ${record.age} yrs`}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          Last visit: {new Date(record.date).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-500" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-            <CardFooter className="pt-0">
-              <Button asChild variant="outline" className="w-full text-gray-700 border-gray-200 hover:bg-gray-50">
-                <Link to="/records">View All Patients</Link>
-              </Button>
-            </CardFooter>
-          </Card>
+    <div className="space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Welcome to IVF Logbook Pro</h2>
+          <p className="text-muted-foreground mt-1">
+            Track and manage your IVF procedures efficiently
+          </p>
         </div>
-
-        {/* Statistics Column */}
-        <div className="space-y-6">
-          <Card className="bg-white shadow-sm border-gray-100">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-semibold text-gray-800">Statistics</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="stats-card">
-                <p className="stats-label">Total Patients</p>
-                <p className="stats-value">{loading ? '...' : stats.totalRecords}</p>
-              </div>
-              
-              <div className="stats-card">
-                <p className="stats-label">New This Week</p>
-                <p className="stats-value">{loading ? '...' : Math.floor(stats.totalRecords * 0.12)}</p>
-              </div>
-              
-              <div className="stats-card">
-                <p className="stats-label">Appointments Today</p>
-                <p className="stats-value">{loading ? '...' : Math.floor(stats.totalRecords * 0.05)}</p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Button asChild className="w-full">
+        
+        <div className="flex items-center gap-2">
+          <Button asChild>
             <Link to="/add-record">
-              <Plus className="w-4 h-4 mr-2" />
-              Add New Patient
+              <FilePlus className="mr-2 h-4 w-4" />
+              Add New Record
             </Link>
           </Button>
         </div>
+      </div>
+
+      <TrialBanner />
+      
+      {/* Stats Row */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="glass-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Records
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+              {loading ? (
+                <div className="h-4 w-16 animate-pulse bg-gray-200 rounded"></div>
+              ) : (
+                stats.totalRecords
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        
+        {topProcedures.slice(0, 3).map((procedure, index) => (
+          <Card key={index} className="glass-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {procedure.name || 'Procedure'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">
+                {loading ? (
+                  <div className="h-4 w-16 animate-pulse bg-gray-200 rounded"></div>
+                ) : (
+                  procedure.count
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      
+      {/* Quick Actions */}
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle>View Records</CardTitle>
+            <CardDescription>
+              Search, filter and export your patient records
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FileSearch className="h-12 w-12 text-primary opacity-80" />
+          </CardContent>
+          <CardFooter>
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/records">Browse Records</Link>
+            </Button>
+          </CardFooter>
+        </Card>
+        
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle>Add New Record</CardTitle>
+            <CardDescription>
+              Create a new IVF procedure record
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FilePlus className="h-12 w-12 text-primary opacity-80" />
+          </CardContent>
+          <CardFooter>
+            <Button asChild className="w-full">
+              <Link to="/add-record">Add Record</Link>
+            </Button>
+          </CardFooter>
+        </Card>
+        
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle>Summary & Analytics</CardTitle>
+            <CardDescription>
+              View summary statistics and procedure breakdown
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <BarChart className="h-12 w-12 text-primary opacity-80" />
+          </CardContent>
+          <CardFooter>
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/summary">View Summary</Link>
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+      
+      {/* Recent Records */}
+      <div>
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle>Recent Records</CardTitle>
+            <CardDescription>
+              Your most recently added IVF procedure records
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="flex items-center space-x-4">
+                    <div className="w-12 h-4 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="flex-1 h-4 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="w-16 h-4 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                ))}
+              </div>
+            ) : stats.recentRecords.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No records added yet</p>
+              </div>
+            ) : (
+              <div className="relative overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs uppercase bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3">Date</th>
+                      <th className="px-6 py-3">MRN</th>
+                      <th className="px-6 py-3">Procedure</th>
+                      <th className="px-6 py-3">Hospital</th>
+                      <th className="px-6 py-3">Supervision</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.recentRecords.map((record) => (
+                      <tr key={record.id} className="bg-white border-b hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">{record.date}</td>
+                        <td className="px-6 py-4">{record.mrn}</td>
+                        <td className="px-6 py-4">{record.procedure}</td>
+                        <td className="px-6 py-4">{record.hospital}</td>
+                        <td className="px-6 py-4">{record.supervision}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+          <CardFooter>
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/records">View All Records</Link>
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );

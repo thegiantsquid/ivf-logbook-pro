@@ -16,7 +16,7 @@ const Layout: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
-          <div className="h-8 w-8 rounded-full border-4 border-t-primary border-primary/20 animate-spin"></div>
+          <div className="h-8 w-8 rounded-full border-4 border-t-blue-500 border-blue-200 animate-spin"></div>
           <p className="text-sm text-muted-foreground">Loading...</p>
         </div>
       </div>
@@ -30,11 +30,11 @@ const Layout: React.FC = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full overflow-hidden bg-gray-50">
+      <div className="min-h-screen flex w-full overflow-hidden">
         <Sidebar />
         <div className="flex-1 flex flex-col w-full overflow-hidden">
           <Navbar />
-          <main className="flex-1 overflow-y-auto p-6">
+          <main className="flex-1 overflow-y-auto bg-gray-50/50 p-4 md:p-8">
             <div className="page-transition max-w-7xl mx-auto">
               <Outlet />
             </div>
