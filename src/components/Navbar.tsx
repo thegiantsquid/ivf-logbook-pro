@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useLocation, Link } from 'react-router-dom';
-import { LogOut, User, Settings } from 'lucide-react';
+import { LogOut, User, Settings, Search } from 'lucide-react';
 
 const getPageTitle = (pathname: string): string => {
   const routes: Record<string, string> = {
@@ -36,24 +36,35 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-10 border-b bg-primary shadow-md">
-      <div className="h-16 flex items-center justify-between px-3 sm:px-4">
-        <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
-          <SidebarTrigger className="min-w-8 h-8 flex items-center justify-center rounded-md text-primary-foreground hover:bg-primary/80 lg:hidden">
+    <header className="sticky top-0 z-10 border-b bg-white shadow-sm">
+      <div className="h-16 flex items-center justify-between px-4 sm:px-6">
+        <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
+          <SidebarTrigger className="min-w-8 h-8 flex items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 lg:hidden">
             <svg width="20" height="20" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M1.5 3C1.22386 3 1 3.22386 1 3.5C1 3.77614 1.22386 4 1.5 4H13.5C13.7761 4 14 3.77614 14 3.5C14 3.22386 13.7761 3 13.5 3H1.5ZM1 7.5C1 7.22386 1.22386 7 1.5 7H13.5C13.7761 7 14 7.22386 14 7.5C14 7.77614 13.7761 8 13.5 8H1.5C1.22386 8 1 7.77614 1 7.5ZM1 11.5C1 11.2239 1.22386 11 1.5 11H13.5C13.7761 11 14 11.2239 14 11.5C14 11.7761 13.7761 12 13.5 12H1.5C1.22386 12 1 11.7761 1 11.5Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
             </svg>
           </SidebarTrigger>
-          <h1 className="text-lg sm:text-xl font-semibold tracking-tight truncate text-primary-foreground">{pageTitle}</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight truncate text-gray-800">{pageTitle}</h1>
+        </div>
+        
+        <div className="relative w-full max-w-md mx-4 hidden md:block">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-4 w-4 text-gray-400" />
+          </div>
+          <input 
+            type="text" 
+            placeholder="Search patients by name, ID or condition..." 
+            className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+          />
         </div>
         
         <div className="flex items-center">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full text-primary-foreground hover:bg-primary/80">
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full text-gray-700 hover:bg-gray-100">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={currentUser?.photoURL || ''} alt={currentUser?.displayName || 'User'} />
-                  <AvatarFallback className="bg-secondary text-secondary-foreground">{getUserInitials()}</AvatarFallback>
+                  <AvatarFallback className="bg-primary text-white">{getUserInitials()}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
