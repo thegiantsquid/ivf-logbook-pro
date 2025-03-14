@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -7,7 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useLocation, Link } from 'react-router-dom';
 import { LogOut, User, Settings } from 'lucide-react';
-
 const getPageTitle = (pathname: string): string => {
   const routes: Record<string, string> = {
     '/': 'Dashboard',
@@ -15,36 +13,30 @@ const getPageTitle = (pathname: string): string => {
     '/add-record': 'Add New Record',
     '/summary': 'Summary & Analytics',
     '/profile': 'Profile',
-    '/settings': 'Settings',
+    '/settings': 'Settings'
   };
-  
   return routes[pathname] || 'IVF Logbook Pro';
 };
-
 const Navbar: React.FC = () => {
-  const { currentUser, signOut } = useAuth();
+  const {
+    currentUser,
+    signOut
+  } = useAuth();
   const location = useLocation();
   const pageTitle = getPageTitle(location.pathname);
-  
   const getUserInitials = (): string => {
     if (!currentUser?.displayName) return '?';
-    return currentUser.displayName
-      .split(' ')
-      .map(name => name.charAt(0))
-      .join('')
-      .toUpperCase();
+    return currentUser.displayName.split(' ').map(name => name.charAt(0)).join('').toUpperCase();
   };
-
-  return (
-    <header className="sticky top-0 z-10 border-b bg-primary shadow-md">
-      <div className="h-16 flex items-center justify-between px-3 sm:px-4">
+  return <header className="sticky top-0 z-10 border-b bg-primary shadow-md">
+      <div className="h-16 flex items-center justify-between px-3 sm:px-4 bg-slate-900">
         <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
           <SidebarTrigger className="min-w-8 h-8 flex items-center justify-center rounded-md text-primary-foreground hover:bg-primary/80 lg:hidden">
             <svg width="20" height="20" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M1.5 3C1.22386 3 1 3.22386 1 3.5C1 3.77614 1.22386 4 1.5 4H13.5C13.7761 4 14 3.77614 14 3.5C14 3.22386 13.7761 3 13.5 3H1.5ZM1 7.5C1 7.22386 1.22386 7 1.5 7H13.5C13.7761 7 14 7.22386 14 7.5C14 7.77614 13.7761 8 13.5 8H1.5C1.22386 8 1 7.77614 1 7.5ZM1 11.5C1 11.2239 1.22386 11 1.5 11H13.5C13.7761 11 14 11.2239 14 11.5C14 11.7761 13.7761 12 13.5 12H1.5C1.22386 12 1 11.7761 1 11.5Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
             </svg>
           </SidebarTrigger>
-          <h1 className="text-lg sm:text-xl font-semibold tracking-tight truncate text-primary-foreground">{pageTitle}</h1>
+          <h1 className="text-lg sm:text-xl font-semibold tracking-tight truncate text-slate-50">{pageTitle}</h1>
         </div>
         
         <div className="flex items-center">
@@ -86,8 +78,6 @@ const Navbar: React.FC = () => {
           </DropdownMenu>
         </div>
       </div>
-    </header>
-  );
+    </header>;
 };
-
 export default Navbar;
