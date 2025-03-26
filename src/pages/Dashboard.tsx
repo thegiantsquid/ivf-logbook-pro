@@ -58,7 +58,7 @@ const Dashboard: React.FC = () => {
   return <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Welcome to xLogbook</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Welcome to Logbook Pro</h2>
           <p className="mt-1 text-slate-950">
             Track and manage your IVF procedures efficiently
           </p>
