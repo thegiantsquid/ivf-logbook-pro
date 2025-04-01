@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -23,6 +24,7 @@ import Settings from '@/pages/Settings';
 import NotFound from '@/pages/NotFound';
 import Index from '@/pages/Index';
 import Subscribe from '@/pages/Subscribe';
+import SubscriptionManagement from '@/pages/SubscriptionManagement';
 
 // Style
 import './App.css';
@@ -49,6 +51,7 @@ function App() {
                     <Route path="profile" element={<Profile />} />
                     <Route path="settings" element={<Settings />} />
                     <Route path="subscribe" element={<Subscribe />} />
+                    <Route path="subscription" element={<SubscriptionManagement />} />
                     <Route path="*" element={<NotFound />} />
                   </Route>
                 </Routes>
