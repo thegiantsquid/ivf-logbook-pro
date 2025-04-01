@@ -25,7 +25,7 @@ body {
     -5px -5px 10px rgba(255, 255, 255, 0.7);
   background: linear-gradient(145deg, #f6f6f6, #ffffff);
   border-radius: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(var(--primary-rgb), 0.1);
 }
 
 .neumorphic-inset {
@@ -34,7 +34,7 @@ body {
     inset -3px -3px 6px rgba(255, 255, 255, 0.8);
   background: linear-gradient(145deg, #f0f0f0, #fafafa);
   border-radius: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(var(--primary-rgb), 0.1);
 }
 
 .neumorphic-button {
@@ -59,16 +59,16 @@ body {
 }
 
 /* Pastel background gradients */
-.bg-pastel-gradient-blue {
-  background: linear-gradient(109.6deg, rgba(223,234,247,1) 11.2%, rgba(244,248,252,1) 91.1%);
+.bg-pastel-gradient-mint {
+  background: linear-gradient(109.6deg, rgba(223, 247, 240, 1) 11.2%, rgba(244, 252, 250, 1) 91.1%);
 }
 
 .bg-pastel-gradient-green {
-  background: linear-gradient(184.1deg, rgba(249,255,182,1) 44.7%, rgba(226,255,172,1) 67.2%);
+  background: linear-gradient(184.1deg, rgba(226, 255, 242, 1) 44.7%, rgba(211, 255, 235, 1) 67.2%);
 }
 
-.bg-pastel-gradient-purple {
-  background: linear-gradient(102.3deg, rgba(147,39,143,0.2) 5.9%, rgba(234,172,232,0.2) 64%, rgba(246,219,245,0.2) 89%);
+.bg-pastel-gradient-teal {
+  background: linear-gradient(102.3deg, rgba(40, 173, 149, 0.1) 5.9%, rgba(144, 224, 206, 0.1) 64%, rgba(219, 246, 241, 0.1) 89%);
 }
 
 /* Micro-interactions */
@@ -91,7 +91,7 @@ input, select, textarea {
 }
 
 input:focus, select:focus, textarea:focus {
-  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
   border-color: rgba(var(--primary-rgb), 0.3);
 }
 
@@ -121,10 +121,10 @@ input:focus, select:focus, textarea:focus {
 
 /* Glass effect with pastel tint */
 .glass {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(var(--primary-rgb), 0.1);
 }
 
 /* Smooth scrolling */

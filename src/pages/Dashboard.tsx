@@ -10,20 +10,31 @@ import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { SubscriptionDetails } from '@/components/subscription/SubscriptionDetails';
 
 const Dashboard = () => {
-  const { recordCount, isLoading } = useRecords();
+  const { records, loading } = useRecords();
+  const recordCount = records.length;
 
-  const recentActivityItems = [
-    {
-      action: "Added record",
-      description: "IVF Procedure at City Hospital",
-      date: "3 days ago"
-    },
-    {
-      action: "Updated record",
-      description: "Embryo Transfer Operation",
-      date: "1 week ago"
-    }
-  ];
+  // Get latest record
+  const latestRecord = records && records.length > 0 ? records[0] : null;
+  const latestActivity = latestRecord ? new Date(latestRecord.date) : null;
+  
+  // Format date as relative time (e.g., "3 days ago")
+  const getRelativeTimeString = (date: Date) => {
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return `${Math.floor(diffDays / 30)} months ago`;
+  };
+
+  const recentActivityItems = records.slice(0, 2).map(record => ({
+    action: record.id ? "Updated record" : "Added record",
+    description: record.procedure || "IVF Procedure",
+    date: getRelativeTimeString(new Date(record.date))
+  }));
 
   return (
     <div className="container mx-auto py-6 px-4 space-y-6">
@@ -48,7 +59,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {isLoading ? '...' : recordCount}
+                  {loading ? '...' : recordCount}
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
                   IVF procedures logged
@@ -64,12 +75,12 @@ const Dashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {recordCount > 0 ? (
+                {recordCount > 0 && latestActivity ? (
                   <div className="text-sm">
                     <div className="flex items-center justify-between">
                       <p>Last record added</p>
                       <Badge variant="outline" className="text-xs">
-                        3 days ago
+                        {getRelativeTimeString(latestActivity)}
                       </Badge>
                     </div>
                   </div>

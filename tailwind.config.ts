@@ -64,14 +64,15 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				pastel: {
-					green: '#F2FCE2',
-					yellow: '#FEF7CD',
-					orange: '#FEC6A1',
-					purple: '#E5DEFF',
+					green: '#E2FFF2',
+					mint: '#D3FFEB',
+					teal: '#C2F5EB',
+					blue: '#D3F2FD',
+					lavender: '#E5E2FF',
 					pink: '#FFDEE2',
 					peach: '#FDE1D3',
-					blue: '#D3E4FD',
-					gray: '#F1F0FB',
+					yellow: '#FFFBD3',
+					gray: '#F1F6F5',
 				}
 			},
 			borderRadius: {

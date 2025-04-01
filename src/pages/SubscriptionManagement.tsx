@@ -138,25 +138,6 @@ const SubscriptionManagement = () => {
             )}
           </CardFooter>
         </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Billing History</CardTitle>
-            <CardDescription>
-              View your past invoices and payment history
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground text-sm">
-              To view your complete billing history and manage payment methods, please visit the Stripe customer portal.
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" onClick={() => window.location.href = "https://billing.stripe.com/p/login/test_28o00n8RV0sT0aA5kk"}>
-              Go to Billing Portal
-            </Button>
-          </CardFooter>
-        </Card>
       </div>
     </div>
   );
