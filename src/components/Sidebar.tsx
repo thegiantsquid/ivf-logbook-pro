@@ -1,18 +1,13 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Sidebar as SidebarWrapper, SidebarContent, SidebarHeader, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { LayoutDashboard, FilePlus, FileSearch, BarChart, Info, User, Settings, CreditCard } from 'lucide-react';
-
 const Sidebar: React.FC = () => {
-  return (
-    <SidebarWrapper>
+  return <SidebarWrapper>
       <SidebarHeader className="border-b backdrop-blur-md bg-primary/90">
         <div className="flex items-center h-16 px-6">
           <h1 className="font-bold text-xl tracking-tight flex items-center gap-2 text-white">
-            <span className="h-6 w-6 rounded-md bg-white text-primary flex items-center justify-center text-sm">
-              IVF
-            </span>
+            
             Logbook Pro
           </h1>
         </div>
@@ -25,7 +20,9 @@ const Sidebar: React.FC = () => {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <NavLink to="/" className={({isActive}) => isActive ? 'text-primary bg-primary/5' : ''}>
+                  <NavLink to="/" className={({
+                  isActive
+                }) => isActive ? 'text-primary bg-primary/5' : ''}>
                     <LayoutDashboard className="w-5 h-5" />
                     <span>Dashboard</span>
                   </NavLink>
@@ -34,7 +31,9 @@ const Sidebar: React.FC = () => {
               
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <NavLink to="/records" className={({isActive}) => isActive ? 'text-primary bg-primary/5' : ''}>
+                  <NavLink to="/records" className={({
+                  isActive
+                }) => isActive ? 'text-primary bg-primary/5' : ''}>
                     <FileSearch className="w-5 h-5" />
                     <span>View Records</span>
                   </NavLink>
@@ -43,7 +42,9 @@ const Sidebar: React.FC = () => {
               
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <NavLink to="/add-record" className={({isActive}) => isActive ? 'text-primary bg-primary/5' : ''}>
+                  <NavLink to="/add-record" className={({
+                  isActive
+                }) => isActive ? 'text-primary bg-primary/5' : ''}>
                     <FilePlus className="w-5 h-5" />
                     <span>Add Record</span>
                   </NavLink>
@@ -52,7 +53,9 @@ const Sidebar: React.FC = () => {
               
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <NavLink to="/summary" className={({isActive}) => isActive ? 'text-primary bg-primary/5' : ''}>
+                  <NavLink to="/summary" className={({
+                  isActive
+                }) => isActive ? 'text-primary bg-primary/5' : ''}>
                     <BarChart className="w-5 h-5" />
                     <span>Summary</span>
                   </NavLink>
@@ -68,7 +71,9 @@ const Sidebar: React.FC = () => {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <NavLink to="/profile" className={({isActive}) => isActive ? 'text-primary bg-primary/5' : ''}>
+                  <NavLink to="/profile" className={({
+                  isActive
+                }) => isActive ? 'text-primary bg-primary/5' : ''}>
                     <User className="w-5 h-5" />
                     <span>Profile</span>
                   </NavLink>
@@ -77,7 +82,9 @@ const Sidebar: React.FC = () => {
               
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <NavLink to="/subscription" className={({isActive}) => isActive ? 'text-primary bg-primary/5' : ''}>
+                  <NavLink to="/subscription" className={({
+                  isActive
+                }) => isActive ? 'text-primary bg-primary/5' : ''}>
                     <CreditCard className="w-5 h-5" />
                     <span>Subscription</span>
                   </NavLink>
@@ -86,7 +93,9 @@ const Sidebar: React.FC = () => {
               
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <NavLink to="/settings" className={({isActive}) => isActive ? 'text-primary bg-primary/5' : ''}>
+                  <NavLink to="/settings" className={({
+                  isActive
+                }) => isActive ? 'text-primary bg-primary/5' : ''}>
                     <Settings className="w-5 h-5" />
                     <span>Settings</span>
                   </NavLink>
@@ -103,8 +112,6 @@ const Sidebar: React.FC = () => {
           <span>IVF Logbook Pro v1.0</span>
         </div>
       </SidebarFooter>
-    </SidebarWrapper>
-  );
+    </SidebarWrapper>;
 };
-
 export default Sidebar;
