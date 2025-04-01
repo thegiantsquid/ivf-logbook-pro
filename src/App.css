@@ -14,7 +14,7 @@ body {
   }
 }
 
-/* Neumorphic styles */
+/* Neumorphic styles with pastel colors */
 .card, .button, .input, .dialog {
   transition: all 0.3s ease;
 }
@@ -56,6 +56,19 @@ body {
     inset 2px 2px 5px rgba(0, 0, 0, 0.05),
     inset -2px -2px 5px rgba(255, 255, 255, 0.8);
   transform: translateY(0);
+}
+
+/* Pastel background gradients */
+.bg-pastel-gradient-blue {
+  background: linear-gradient(109.6deg, rgba(223,234,247,1) 11.2%, rgba(244,248,252,1) 91.1%);
+}
+
+.bg-pastel-gradient-green {
+  background: linear-gradient(184.1deg, rgba(249,255,182,1) 44.7%, rgba(226,255,172,1) 67.2%);
+}
+
+.bg-pastel-gradient-purple {
+  background: linear-gradient(102.3deg, rgba(147,39,143,0.2) 5.9%, rgba(234,172,232,0.2) 64%, rgba(246,219,245,0.2) 89%);
 }
 
 /* Micro-interactions */
@@ -106,7 +119,7 @@ input:focus, select:focus, textarea:focus {
   }
 }
 
-/* Glass effect */
+/* Glass effect with pastel tint */
 .glass {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
