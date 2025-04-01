@@ -40,6 +40,22 @@ serve(async (req) => {
       throw new Error('No email found');
     }
 
+    // Specific product ID provided by user
+    const PRODUCT_ID = 'prod_S3BoOl5xVZ5E37';
+
+    // Get the price associated with this product
+    const prices = await stripe.prices.list({
+      product: PRODUCT_ID,
+      active: true,
+      limit: 1
+    });
+
+    if (prices.data.length === 0) {
+      throw new Error('No active price found for the product');
+    }
+
+    const price_id = prices.data[0].id;
+
     // Get customer by email
     const customers = await stripe.customers.list({
       email: email,
@@ -60,7 +76,6 @@ serve(async (req) => {
     }
 
     // Check for active subscriptions
-    const price_id = "price_1PoB3mF9UQ7KRrS6qiAD4Kkb"; // Replace with your actual price ID
     const subscriptions = await stripe.subscriptions.list({
       customer: customers.data[0].id,
       status: 'active',
