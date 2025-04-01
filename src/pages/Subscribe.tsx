@@ -1,12 +1,15 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, Star, Calendar, Award, FileEdit, FileSearch } from 'lucide-react';
+import { Check, Star, Calendar, Award, FileEdit, FileSearch, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { toast } from '@/lib/toast';
 
 const Subscribe = () => {
   const { hasActiveSubscription, isInTrialPeriod, trialEndsAt } = useSubscription();
+  const [isLoading, setIsLoading] = useState(false);
   
   const features = [
     { icon: FileEdit, text: "Add unlimited IVF procedure records" },
@@ -17,8 +20,35 @@ const Subscribe = () => {
   ];
 
   const handleSubscribe = async () => {
-    // TODO: Implement Stripe integration
-    console.log('Subscribe clicked');
+    setIsLoading(true);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error('You must be logged in to subscribe');
+        return;
+      }
+      
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Redirect to Stripe checkout
+      window.location.href = data.url;
+      
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      toast.error('Failed to create checkout session');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -30,33 +60,45 @@ const Subscribe = () => {
         </p>
       </div>
 
-      <Card className="w-full">
-        <CardHeader>
+      <Card className="w-full border-gray-100 shadow-md">
+        <CardHeader className="border-b pb-6">
           <CardTitle className="text-2xl">Professional Plan</CardTitle>
           <CardDescription>Perfect for medical professionals</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pt-6">
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold">$19</span>
+            <span className="text-3xl font-bold text-primary">$19</span>
             <span className="text-muted-foreground">/month</span>
           </div>
           
           <ul className="space-y-4">
             {features.map((feature, index) => (
               <li key={index} className="flex items-start gap-2">
-                <Check className="h-5 w-5 text-primary mt-0.5" />
-                <span>{feature.text}</span>
+                <Check className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                <span className="text-foreground">{feature.text}</span>
               </li>
             ))}
           </ul>
         </CardContent>
-        <CardFooter>
-          <Button onClick={handleSubscribe} className="w-full" size="lg">
-            {hasActiveSubscription 
-              ? 'Already Subscribed' 
-              : isInTrialPeriod 
-                ? 'Subscribe Now' 
-                : 'Reactivate Subscription'}
+        <CardFooter className="pt-2">
+          <Button 
+            onClick={handleSubscribe} 
+            className="w-full" 
+            size="lg"
+            disabled={isLoading || hasActiveSubscription}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : hasActiveSubscription ? (
+              'Already Subscribed'
+            ) : isInTrialPeriod ? (
+              'Subscribe Now'
+            ) : (
+              'Reactivate Subscription'
+            )}
           </Button>
         </CardFooter>
       </Card>
