@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,35 +9,33 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Pencil, Save, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-
 const Profile = () => {
-  const { currentUser, loading } = useAuth();
+  const {
+    currentUser,
+    loading
+  } = useAuth();
   const [isEditing, setIsEditing] = React.useState(false);
   const [displayName, setDisplayName] = React.useState('');
   const [photoURL, setPhotoURL] = React.useState('');
   const [isSaving, setIsSaving] = React.useState(false);
-
   React.useEffect(() => {
     if (currentUser) {
       setDisplayName(currentUser.displayName || '');
       setPhotoURL(currentUser.photoURL || '');
     }
   }, [currentUser]);
-
   const handleSaveProfile = async () => {
     if (!currentUser) return;
-    
     try {
       setIsSaving(true);
-      
-      const { error } = await supabase.auth.updateUser({
-        data: { 
-          full_name: displayName 
+      const {
+        error
+      } = await supabase.auth.updateUser({
+        data: {
+          full_name: displayName
         }
       });
-      
       if (error) throw error;
-      
       toast.success('Profile updated successfully');
       setIsEditing(false);
     } catch (error: any) {
@@ -47,26 +44,16 @@ const Profile = () => {
       setIsSaving(false);
     }
   };
-
   const getUserInitials = (): string => {
     if (!displayName) return '?';
-    return displayName
-      .split(' ')
-      .map(name => name.charAt(0))
-      .join('')
-      .toUpperCase();
+    return displayName.split(' ').map(name => name.charAt(0)).join('').toUpperCase();
   };
-
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
+    return <div className="flex items-center justify-center h-full">
         <div className="h-8 w-8 rounded-full border-4 border-t-blue-500 border-blue-200 animate-spin"></div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="container max-w-4xl mx-auto py-6">
+  return <div className="container max-w-4xl mx-auto py-6">
       <h1 className="text-2xl font-bold mb-6">Your Profile</h1>
       
       <Tabs defaultValue="profile" className="w-full">
@@ -92,32 +79,21 @@ const Profile = () => {
                       {getUserInitials()}
                     </AvatarFallback>
                   </Avatar>
-                  {isEditing && (
-                    <Button variant="outline" size="sm" className="mt-2">
+                  {isEditing && <Button variant="outline" size="sm" className="mt-2">
                       Change avatar
-                    </Button>
-                  )}
+                    </Button>}
                 </div>
                 
                 <div className="space-y-4 flex-1">
                   <div className="space-y-1">
                     <Label htmlFor="displayName">Display Name</Label>
-                    {isEditing ? (
-                      <Input 
-                        id="displayName" 
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                        placeholder="Your display name"
-                      />
-                    ) : (
-                      <div className="py-2 px-3 rounded-md border bg-gray-50">
+                    {isEditing ? <Input id="displayName" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your display name" /> : <div className="py-2 px-3 rounded-md border bg-gray-50">
                         {currentUser?.displayName || 'Not set'}
-                      </div>
-                    )}
+                      </div>}
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor="email">Email</Label>
-                    <div className="py-2 px-3 rounded-md border bg-gray-50">
+                    <div className="py-2 px-3 rounded-md border bg-gray-600">
                       {currentUser?.email || 'Not set'}
                     </div>
                   </div>
@@ -125,25 +101,18 @@ const Profile = () => {
               </div>
             </CardContent>
             <CardFooter className="flex justify-end gap-2">
-              {isEditing ? (
-                <>
+              {isEditing ? <>
                   <Button variant="outline" onClick={() => setIsEditing(false)}>
                     Cancel
                   </Button>
-                  <Button 
-                    onClick={handleSaveProfile} 
-                    disabled={isSaving}
-                  >
+                  <Button onClick={handleSaveProfile} disabled={isSaving}>
                     {isSaving ? 'Saving...' : 'Save Changes'}
                     <Save className="ml-2 h-4 w-4" />
                   </Button>
-                </>
-              ) : (
-                <Button onClick={() => setIsEditing(true)}>
+                </> : <Button onClick={() => setIsEditing(true)}>
                   Edit Profile
                   <Pencil className="ml-2 h-4 w-4" />
-                </Button>
-              )}
+                </Button>}
             </CardFooter>
           </Card>
         </TabsContent>
@@ -174,8 +143,6 @@ const Profile = () => {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>;
 };
-
 export default Profile;
