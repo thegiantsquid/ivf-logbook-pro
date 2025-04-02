@@ -1,24 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateTestRecords } from '@/utils/generateTestData';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { 
-  ColumnFiltersState,
-  SortingState, 
-  PaginationState, 
-  getSortedRowModel, 
-  getFilteredRowModel,
-  getCoreRowModel, 
-  getPaginationRowModel, 
-  useReactTable
-} from '@tanstack/react-table';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ColumnFiltersState, SortingState, PaginationState, getSortedRowModel, getFilteredRowModel, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Trash, FileEdit } from 'lucide-react';
 import { toast } from '@/lib/toast';
@@ -30,7 +14,6 @@ import { usePDFExport } from '@/components/records/usePDFExport';
 import RecordsTable from '@/components/records/RecordsTable';
 import TableActions from '@/components/records/TableActions';
 import TableFilters from '@/components/records/TableFilters';
-
 const ViewRecords: React.FC = () => {
   const navigate = useNavigate();
   // State for table configuration
@@ -38,7 +21,7 @@ const ViewRecords: React.FC = () => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 10,
+    pageSize: 10
   });
   const [columnVisibility, setColumnVisibility] = useState({
     mrn: true,
@@ -48,15 +31,15 @@ const ViewRecords: React.FC = () => {
     supervision: true,
     hospital: true,
     complicationNotes: false,
-    operationNotes: false,
+    operationNotes: false
   });
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
   // Custom hooks for data management
-  const { 
-    dateFilteredRecords, 
-    loading, 
-    fetchRecords, 
+  const {
+    dateFilteredRecords,
+    loading,
+    fetchRecords,
     handleDelete,
     fromDate,
     setFromDate,
@@ -68,9 +51,10 @@ const ViewRecords: React.FC = () => {
     globalFilter,
     setGlobalFilter
   } = useRecordsData();
-  
   const columns = useTableColumns();
-  const { exportToPDF } = usePDFExport();
+  const {
+    exportToPDF
+  } = usePDFExport();
 
   // Handle row selection
   const toggleRowSelection = (id: string) => {
@@ -100,13 +84,7 @@ const ViewRecords: React.FC = () => {
 
   // Handle PDF export
   const handleExportToPDF = () => {
-    exportToPDF(
-      table.getFilteredRowModel().rows.map(row => row.original),
-      columns,
-      columnVisibility,
-      fromDate,
-      toDate
-    );
+    exportToPDF(table.getFilteredRowModel().rows.map(row => row.original), columns, columnVisibility, fromDate, toDate);
   };
 
   // Handle editing a record
@@ -115,7 +93,7 @@ const ViewRecords: React.FC = () => {
       toast.error('Please select exactly one record to edit');
       return;
     }
-    
+
     // Navigate to edit page with the selected record ID
     navigate(`/records/edit/${selectedRows[0]}`);
   };
@@ -126,20 +104,16 @@ const ViewRecords: React.FC = () => {
       toast.error('Please select at least one record to delete');
       return;
     }
-
     if (window.confirm(`Are you sure you want to delete ${selectedRows.length} record(s)?`)) {
       // Delete all selected records one by one
       const deletePromises = selectedRows.map(id => handleDelete(id));
-      
-      Promise.all(deletePromises)
-        .then(() => {
-          toast.success(`${selectedRows.length} record(s) deleted successfully`);
-          setSelectedRows([]);
-        })
-        .catch(error => {
-          toast.error('Error deleting records');
-          console.error(error);
-        });
+      Promise.all(deletePromises).then(() => {
+        toast.success(`${selectedRows.length} record(s) deleted successfully`);
+        setSelectedRows([]);
+      }).catch(error => {
+        toast.error('Error deleting records');
+        console.error(error);
+      });
     }
   };
 
@@ -152,7 +126,7 @@ const ViewRecords: React.FC = () => {
       pagination,
       columnVisibility,
       columnFilters,
-      globalFilter,
+      globalFilter
     },
     enableColumnFilters: true,
     onColumnFiltersChange: setColumnFilters,
@@ -163,16 +137,12 @@ const ViewRecords: React.FC = () => {
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    getPaginationRowModel: getPaginationRowModel()
   });
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Patient Records</h2>
-        <p className="text-muted-foreground mt-1">
-          View, search, filter and export your IVF procedure records
-        </p>
+        <p className="text-muted-foreground mt-1">View, search, filter and export your procedure records</p>
       </div>
 
       <Card className="glass-card">
@@ -184,60 +154,26 @@ const ViewRecords: React.FC = () => {
                 {loading ? 'Loading records...' : `Showing ${table.getFilteredRowModel().rows.length} of ${dateFilteredRecords.length} records`}
               </CardDescription>
             </div>
-            <TableFilters 
-              globalFilter={globalFilter}
-              setGlobalFilter={setGlobalFilter}
-              fromDate={fromDate}
-              setFromDate={setFromDate}
-              toDate={toDate}
-              setToDate={setToDate}
-              clearDateFilters={clearDateFilters}
-              handleGenerateTestData={handleGenerateTestData}
-              exportToPDF={handleExportToPDF}
-              generatingRecords={generatingRecords}
-              columnVisibility={columnVisibility}
-              setColumnVisibility={setColumnVisibility}
-            />
+            <TableFilters globalFilter={globalFilter} setGlobalFilter={setGlobalFilter} fromDate={fromDate} setFromDate={setFromDate} toDate={toDate} setToDate={setToDate} clearDateFilters={clearDateFilters} handleGenerateTestData={handleGenerateTestData} exportToPDF={handleExportToPDF} generatingRecords={generatingRecords} columnVisibility={columnVisibility} setColumnVisibility={setColumnVisibility} />
           </div>
 
           {/* Row action buttons */}
           <div className="flex items-center gap-2 mt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleEdit}
-              disabled={selectedRows.length !== 1 || loading}
-              className="transition-all duration-300 ease-in-out"
-            >
+            <Button variant="outline" size="sm" onClick={handleEdit} disabled={selectedRows.length !== 1 || loading} className="transition-all duration-300 ease-in-out">
               <FileEdit className="h-4 w-4 mr-2" />
               Edit
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDeleteSelected}
-              disabled={selectedRows.length === 0 || loading}
-              className="text-red-500 hover:text-red-700 transition-all duration-300 ease-in-out"
-            >
+            <Button variant="outline" size="sm" onClick={handleDeleteSelected} disabled={selectedRows.length === 0 || loading} className="text-red-500 hover:text-red-700 transition-all duration-300 ease-in-out">
               <Trash className="h-4 w-4 mr-2" />
               Delete {selectedRows.length > 0 && `(${selectedRows.length})`}
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <RecordsTable 
-            table={table} 
-            columns={columns} 
-            loading={loading} 
-            handleDelete={handleDelete}
-            selectedRows={selectedRows}
-            toggleRowSelection={toggleRowSelection}
-          />
+          <RecordsTable table={table} columns={columns} loading={loading} handleDelete={handleDelete} selectedRows={selectedRows} toggleRowSelection={toggleRowSelection} />
           <TableActions table={table} loading={loading} />
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
-
 export default ViewRecords;
