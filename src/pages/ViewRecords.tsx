@@ -15,6 +15,7 @@ import { usePDFExport } from '@/components/records/usePDFExport';
 import RecordsTable from '@/components/records/RecordsTable';
 import TableActions from '@/components/records/TableActions';
 import TableFilters from '@/components/records/TableFilters';
+
 const ViewRecords: React.FC = () => {
   const navigate = useNavigate();
   // State for table configuration
@@ -35,6 +36,20 @@ const ViewRecords: React.FC = () => {
     operationNotes: false
   });
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [showIntroPage, setShowIntroPage] = useState(false);
+  const [introText, setIntroText] = useState(`I, ............................................................, hereby do solemnly declare that
+all information contained in this logbook is a true and accurate record of my professional
+experience from ............................. to ............................. representing the period of my
+tenure as ........................................................... at ...........................................................
+
+Signature:............................................................................................
+Name:.................................................................................................
+ID No: ..................................................................................................
+
+Date: ..........................................................................................................
+Reporting Doctor / Medical Director: .................................................................
+
+Signature: ..................................................................................................`);
 
   // Custom hooks for data management
   const {
@@ -42,6 +57,7 @@ const ViewRecords: React.FC = () => {
     loading,
     fetchRecords,
     handleDelete,
+    handleBatchDelete,
     fromDate,
     setFromDate,
     toDate,
@@ -85,7 +101,15 @@ const ViewRecords: React.FC = () => {
 
   // Handle PDF export
   const handleExportToPDF = () => {
-    exportToPDF(table.getFilteredRowModel().rows.map(row => row.original), columns, columnVisibility, fromDate, toDate);
+    exportToPDF(
+      table.getFilteredRowModel().rows.map(row => row.original), 
+      columns, 
+      columnVisibility, 
+      fromDate, 
+      toDate,
+      showIntroPage,
+      introText
+    );
   };
 
   // Handle editing a record
@@ -100,23 +124,17 @@ const ViewRecords: React.FC = () => {
   };
 
   // Handle deleting multiple records
-  const handleDeleteSelected = () => {
+  const handleDeleteSelected = async () => {
     if (selectedRows.length === 0) {
       toast.error('Please select at least one record to delete');
       return;
     }
     
-    // Single confirmation for all selected records
-    if (window.confirm(`Are you sure you want to delete ${selectedRows.length} record(s)?`)) {
-      // Delete all selected records one by one
-      const deletePromises = selectedRows.map(id => handleDelete(id, false)); // Pass false to skip individual confirmations
-      Promise.all(deletePromises).then(() => {
-        toast.success(`${selectedRows.length} record(s) deleted successfully`);
-        setSelectedRows([]);
-      }).catch(error => {
-        toast.error('Error deleting records');
-        console.error(error);
-      });
+    // Use the new batch delete method that handles confirmation
+    const success = await handleBatchDelete(selectedRows);
+    if (success) {
+      toast.success(`${selectedRows.length} record(s) deleted successfully`);
+      setSelectedRows([]);
     }
   };
 
@@ -157,7 +175,25 @@ const ViewRecords: React.FC = () => {
                 {loading ? 'Loading records...' : `Showing ${table.getFilteredRowModel().rows.length} of ${dateFilteredRecords.length} records`}
               </CardDescription>
             </div>
-            <TableFilters globalFilter={globalFilter} setGlobalFilter={setGlobalFilter} fromDate={fromDate} setFromDate={setFromDate} toDate={toDate} setToDate={setToDate} clearDateFilters={clearDateFilters} handleGenerateTestData={handleGenerateTestData} exportToPDF={handleExportToPDF} generatingRecords={generatingRecords} columnVisibility={columnVisibility} setColumnVisibility={setColumnVisibility} />
+            <TableFilters 
+              globalFilter={globalFilter} 
+              setGlobalFilter={setGlobalFilter} 
+              fromDate={fromDate} 
+              setFromDate={setFromDate} 
+              toDate={toDate} 
+              setToDate={setToDate} 
+              clearDateFilters={clearDateFilters}
+
+              handleGenerateTestData={handleGenerateTestData} 
+              exportToPDF={handleExportToPDF} 
+              generatingRecords={generatingRecords} 
+              columnVisibility={columnVisibility} 
+              setColumnVisibility={setColumnVisibility}
+              showIntroPage={showIntroPage}
+              setShowIntroPage={setShowIntroPage}
+              introText={introText}
+              setIntroText={setIntroText}
+            />
           </div>
 
           {/* Row action buttons */}
@@ -179,4 +215,5 @@ const ViewRecords: React.FC = () => {
       </Card>
     </div>;
 };
+
 export default ViewRecords;

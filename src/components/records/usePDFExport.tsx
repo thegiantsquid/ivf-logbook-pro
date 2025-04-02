@@ -13,10 +13,30 @@ export const usePDFExport = () => {
     columns: ColumnDef<IVFRecord>[], 
     columnVisibility: Record<string, boolean>,
     fromDate: Date | undefined,
-    toDate: Date | undefined
+    toDate: Date | undefined,
+    showIntroPage: boolean = false,
+    introText: string = ''
   ) => {
     try {
       const doc = new jsPDF();
+      let currentPage = 1;
+      
+      // Add intro page if requested
+      if (showIntroPage && introText) {
+        doc.setFontSize(12);
+        
+        // Split the intro text into lines to fit the page
+        const textLines = doc.splitTextToSize(introText, 180);
+        doc.text(textLines, 15, 20);
+        
+        // Add page number to intro page
+        doc.setFontSize(10);
+        doc.text(`Page ${currentPage}`, doc.internal.pageSize.getWidth() - 30, doc.internal.pageSize.getHeight() - 10);
+        
+        // Add a new page for the actual data
+        doc.addPage();
+        currentPage++;
+      }
       
       const visibleColumns = columns.filter(col => {
         if (col.id === 'actions') return false;
@@ -71,6 +91,11 @@ export const usePDFExport = () => {
         headStyles: {
           fillColor: [66, 139, 202],
         },
+        didDrawPage: function(data) {
+          // Add page number at the bottom of each page
+          doc.setFontSize(10);
+          doc.text(`Page ${data.pageNumber}`, doc.internal.pageSize.getWidth() - 30, doc.internal.pageSize.getHeight() - 10);
+        }
       });
 
       doc.save('ivf_records.pdf');

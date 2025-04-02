@@ -9,12 +9,19 @@ export const useRecordsData = () => {
   const [toDate, setToDate] = useState<Date | undefined>(undefined);
   const [generatingRecords, setGeneratingRecords] = useState(false);
   const [globalFilter, setGlobalFilter] = useState<string>('');
+  const [pendingDeletions, setPendingDeletions] = useState<string[]>([]);
 
   // Filter records by date range
   const dateFilteredRecords = useMemo(() => {
-    if (!fromDate && !toDate) return records;
+    if (!fromDate && !toDate) {
+      // Filter out any records that are pending deletion
+      return records.filter(record => !pendingDeletions.includes(record.id || ''));
+    }
     
     return records.filter(record => {
+      // Skip records pending deletion
+      if (pendingDeletions.includes(record.id || '')) return false;
+      
       const recordDate = new Date(record.date);
       if (fromDate && toDate) {
         return recordDate >= fromDate && recordDate <= toDate;
@@ -25,7 +32,7 @@ export const useRecordsData = () => {
       }
       return true;
     });
-  }, [records, fromDate, toDate]);
+  }, [records, fromDate, toDate, pendingDeletions]);
 
   const clearDateFilters = () => {
     setFromDate(undefined);
@@ -35,8 +42,26 @@ export const useRecordsData = () => {
   const handleDelete = async (id: string, showConfirmation = true) => {
     // Skip confirmation if showConfirmation is false (for batch deletes)
     if (!showConfirmation || window.confirm('Are you sure you want to delete this record?')) {
+      // Add to pending deletions immediately for UI feedback
+      setPendingDeletions(prev => [...prev, id]);
       await deleteRecord(id);
     }
+  };
+
+  const handleBatchDelete = async (ids: string[]) => {
+    if (window.confirm(`Are you sure you want to delete ${ids.length} record(s)?`)) {
+      // Add all to pending deletions immediately
+      setPendingDeletions(prev => [...prev, ...ids]);
+      
+      // Delete all records
+      const deletePromises = ids.map(id => deleteRecord(id));
+      await Promise.all(deletePromises);
+      
+      // Clear pending after operation complete
+      setPendingDeletions([]);
+      return true;
+    }
+    return false;
   };
 
   return { 
@@ -44,6 +69,7 @@ export const useRecordsData = () => {
     loading, 
     fetchRecords, 
     handleDelete,
+    handleBatchDelete,
     fromDate,
     setFromDate,
     toDate,
@@ -52,6 +78,7 @@ export const useRecordsData = () => {
     generatingRecords,
     setGeneratingRecords,
     globalFilter,
-    setGlobalFilter
+    setGlobalFilter,
+    pendingDeletions
   };
 };

@@ -1,0 +1,4 @@
+
+// This is a binary file (Excel) that can't be directly written here
+// In a real implementation, you would need to create an Excel file and place it in the public folder
+// For this demo, we'll simulate its presence, but you'll need to actually create and add this file manually
