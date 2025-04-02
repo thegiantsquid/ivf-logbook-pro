@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useRecords } from '@/hooks/useRecords';
@@ -8,41 +7,37 @@ import { Badge } from '@/components/ui/badge';
 import { CalendarDays, FilePlus, FileText, BarChart2 } from 'lucide-react';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { SubscriptionDetails } from '@/components/subscription/SubscriptionDetails';
-
 const Dashboard = () => {
-  const { records, loading } = useRecords();
+  const {
+    records,
+    loading
+  } = useRecords();
   const recordCount = records.length;
 
   // Get latest record
   const latestRecord = records && records.length > 0 ? records[0] : null;
   const latestActivity = latestRecord ? new Date(latestRecord.date) : null;
-  
+
   // Format date as relative time (e.g., "3 days ago")
   const getRelativeTimeString = (date: Date) => {
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
     if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
     return `${Math.floor(diffDays / 30)} months ago`;
   };
-
   const recentActivityItems = records.slice(0, 2).map(record => ({
     action: record.id ? "Updated record" : "Added record",
     description: record.procedure || "IVF Procedure",
     date: getRelativeTimeString(new Date(record.date))
   }));
-
-  return (
-    <div className="container mx-auto py-6 px-4 space-y-6">
+  return <div className="container mx-auto py-6 px-4 space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight mb-1">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome to your IVF Logbook Pro dashboard
-        </p>
+        <p className="text-muted-foreground">Welcome to your Logbook Pro dashboard</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -75,20 +70,16 @@ const Dashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {recordCount > 0 && latestActivity ? (
-                  <div className="text-sm">
+                {recordCount > 0 && latestActivity ? <div className="text-sm">
                     <div className="flex items-center justify-between">
                       <p>Last record added</p>
                       <Badge variant="outline" className="text-xs">
                         {getRelativeTimeString(latestActivity)}
                       </Badge>
                     </div>
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">
+                  </div> : <div className="text-sm text-muted-foreground">
                     No records yet
-                  </div>
-                )}
+                  </div>}
               </CardContent>
             </Card>
           </div>
@@ -102,10 +93,8 @@ const Dashboard = () => {
               <CardDescription>Your latest IVF record updates</CardDescription>
             </CardHeader>
             <CardContent>
-              {recordCount > 0 ? (
-                <div className="space-y-4">
-                  {recentActivityItems.map((item, i) => (
-                    <div key={i} className="flex justify-between items-start border-b pb-3 last:border-0">
+              {recordCount > 0 ? <div className="space-y-4">
+                  {recentActivityItems.map((item, i) => <div key={i} className="flex justify-between items-start border-b pb-3 last:border-0">
                       <div>
                         <p className="font-medium">{item.action}</p>
                         <p className="text-sm text-muted-foreground">{item.description}</p>
@@ -113,11 +102,8 @@ const Dashboard = () => {
                       <Badge variant="outline" className="text-xs">
                         {item.date}
                       </Badge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-6">
+                    </div>)}
+                </div> : <div className="text-center py-6">
                   <p className="text-muted-foreground mb-4">No records found</p>
                   <Button asChild>
                     <Link to="/add-record">
@@ -125,8 +111,7 @@ const Dashboard = () => {
                       Add Your First Record
                     </Link>
                   </Button>
-                </div>
-              )}
+                </div>}
             </CardContent>
           </Card>
 
@@ -214,8 +199,6 @@ const Dashboard = () => {
           </Card>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Dashboard;
