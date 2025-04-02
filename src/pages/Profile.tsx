@@ -87,7 +87,7 @@ const Profile = () => {
                 <div className="space-y-4 flex-1">
                   <div className="space-y-1">
                     <Label htmlFor="displayName">Display Name</Label>
-                    {isEditing ? <Input id="displayName" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your display name" /> : <div className="py-2 px-3 rounded-md border bg-gray-50">
+                    {isEditing ? <Input id="displayName" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your display name" className="bg-gray-600" /> : <div className="py-2 px-3 rounded-md border bg-gray-50">
                         {currentUser?.displayName || 'Not set'}
                       </div>}
                   </div>
