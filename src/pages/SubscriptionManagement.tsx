@@ -16,7 +16,7 @@ const SubscriptionManagement = () => {
   const [isCancelling, setIsCancelling] = useState(false);
   
   const features = [
-    { icon: FileText, text: "Unlimited IVF procedure records" },
+    { icon: FileText, text: "Unlimited procedure records" },
     { icon: BarChart2, text: "Advanced analytics and reporting" },
     { icon: Calendar, text: "Full procedure timeline access" },
     { icon: Clock, text: "Priority support response" },

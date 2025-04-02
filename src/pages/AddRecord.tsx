@@ -12,11 +12,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/lib/toast';
 import { IVFRecord, ProcedureType, SupervisionType, HospitalType } from '@/types';
-import { FileUp, FilePlus, Plus } from 'lucide-react';
+import { FileUp, FilePlus, Plus, FileDown, Download } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { TrialBanner } from '@/components/subscription/TrialBanner';
+import * as XLSX from 'xlsx';
+
 type FormValues = Omit<IVFRecord, 'id' | 'createdAt' | 'updatedAt' | 'createdBy'>;
 const supervisionTypes: SupervisionType[] = ['Direct', 'Indirect', 'Independent', 'Teaching'];
+
 const AddRecord: React.FC = () => {
   const {
     addRecord,
@@ -45,6 +48,7 @@ const AddRecord: React.FC = () => {
       hospital: ''
     }
   });
+  
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
@@ -61,6 +65,7 @@ const AddRecord: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+  
   const handleAddProcedureType = async () => {
     if (!newProcedureType.trim()) {
       toast.error('Please enter a procedure type');
@@ -74,6 +79,7 @@ const AddRecord: React.FC = () => {
       setIsAddingProcedure(false);
     }
   };
+  
   const handleAddHospitalType = async () => {
     if (!newHospitalType.trim()) {
       toast.error('Please enter a hospital type');
@@ -87,6 +93,7 @@ const AddRecord: React.FC = () => {
       setIsAddingHospital(false);
     }
   };
+  
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -108,12 +115,57 @@ const AddRecord: React.FC = () => {
       setIsImporting(false);
     }
   };
+  
+  const downloadTemplateFile = () => {
+    try {
+      // Create a template workbook
+      const wb = XLSX.utils.book_new();
+      const templateData = [
+        {
+          mrn: 'MRN12345',
+          date: '2023-05-01',
+          age: 35,
+          procedure: 'Sample Procedure',
+          supervision: 'Direct',
+          hospital: 'Sample Hospital',
+          complicationNotes: 'Any complications',
+          operationNotes: 'General notes about the procedure'
+        },
+        {
+          mrn: 'MRN67890',
+          date: '2023-05-02',
+          age: 29,
+          procedure: 'Another Procedure',
+          supervision: 'Indirect',
+          hospital: 'Another Hospital',
+          complicationNotes: '',
+          operationNotes: 'More procedure notes'
+        }
+      ];
+      
+      // Convert to worksheet
+      const ws = XLSX.utils.json_to_sheet(templateData);
+      
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Template");
+      
+      // Generate and download file
+      XLSX.writeFile(wb, "procedure_records_template.xlsx");
+      
+      toast.success('Template file downloaded successfully');
+    } catch (error) {
+      console.error('Error downloading template:', error);
+      toast.error('Failed to download template file');
+    }
+  };
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [newProcedureType, setNewProcedureType] = useState('');
   const [newHospitalType, setNewHospitalType] = useState('');
   const [isAddingProcedure, setIsAddingProcedure] = useState(false);
   const [isAddingHospital, setIsAddingHospital] = useState(false);
+
   if (!isLoading && !hasActiveSubscription && !isInTrialPeriod) {
     return <div className="space-y-6">
         <div>
@@ -146,14 +198,9 @@ const AddRecord: React.FC = () => {
         </Card>
       </div>;
   }
+
   return <div className="space-y-6">
       <TrialBanner />
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Add Record</h2>
-        <p className="text-muted-foreground mt-1">
-          Create a new record or import from Excel
-        </p>
-      </div>
       
       <Tabs defaultValue="manual" className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
@@ -370,6 +417,18 @@ const AddRecord: React.FC = () => {
                   Your file should have columns matching the record fields: mrn, date, age, procedure, supervision, etc.
                 </p>
                 <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} disabled={isImporting} className="max-w-sm" />
+                
+                <div className="mt-4 w-full max-w-sm">
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={downloadTemplateFile}
+                    disabled={isImporting}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Template File
+                  </Button>
+                </div>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
@@ -398,4 +457,5 @@ const AddRecord: React.FC = () => {
       </Tabs>
     </div>;
 };
+
 export default AddRecord;
