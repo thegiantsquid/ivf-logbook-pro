@@ -109,7 +109,7 @@ const Sidebar: React.FC = () => {
       <SidebarFooter className="py-4 px-6">
         <div className="flex items-center justify-center gap-2 text-xs text-white/70">
           <Info className="w-3.5 h-3.5" />
-          <span>IVF Logbook Pro v1.0</span>
+          <span>Logbook Pro v1.0</span>
         </div>
       </SidebarFooter>
     </SidebarWrapper>;
