@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -94,7 +95,7 @@ const AddRecord: React.FC = () => {
     }
   };
   
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -103,10 +104,21 @@ const AddRecord: React.FC = () => {
       toast.error('Please upload an Excel or CSV file');
       return;
     }
+    
+    // Store the file for later upload
+    setSelectedFile(file);
+  };
+  
+  const handleFileUpload = async () => {
+    if (!selectedFile) {
+      toast.error('Please select a file first');
+      return;
+    }
+    
     setIsImporting(true);
     try {
-      await importFromExcel(file);
-      event.target.value = '';
+      await importFromExcel(selectedFile);
+      setSelectedFile(null);
       navigate('/records');
     } catch (error) {
       console.error('Error importing records:', error);
@@ -165,6 +177,7 @@ const AddRecord: React.FC = () => {
   const [newHospitalType, setNewHospitalType] = useState('');
   const [isAddingProcedure, setIsAddingProcedure] = useState(false);
   const [isAddingHospital, setIsAddingHospital] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   if (!isLoading && !hasActiveSubscription && !isInTrialPeriod) {
     return <div className="space-y-6">
@@ -416,7 +429,13 @@ const AddRecord: React.FC = () => {
                 <p className="text-sm text-muted-foreground mb-4 text-center">
                   Your file should have columns matching the record fields: mrn, date, age, procedure, supervision, etc.
                 </p>
-                <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileUpload} disabled={isImporting} className="max-w-sm" />
+                <Input 
+                  type="file" 
+                  accept=".xlsx,.xls,.csv" 
+                  onChange={handleFileSelection} 
+                  disabled={isImporting} 
+                  className="max-w-sm" 
+                />
                 
                 <div className="mt-4 w-full max-w-sm">
                   <Button 
@@ -447,7 +466,10 @@ const AddRecord: React.FC = () => {
               </div>
               
               <div className="w-full flex justify-end">
-                <Button disabled={isImporting}>
+                <Button 
+                  onClick={handleFileUpload} 
+                  disabled={isImporting || !selectedFile}
+                >
                   {isImporting ? 'Importing...' : 'Upload File'}
                 </Button>
               </div>

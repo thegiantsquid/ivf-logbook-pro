@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateTestRecords } from '@/utils/generateTestData';
@@ -104,9 +105,11 @@ const ViewRecords: React.FC = () => {
       toast.error('Please select at least one record to delete');
       return;
     }
+    
+    // Single confirmation for all selected records
     if (window.confirm(`Are you sure you want to delete ${selectedRows.length} record(s)?`)) {
       // Delete all selected records one by one
-      const deletePromises = selectedRows.map(id => handleDelete(id));
+      const deletePromises = selectedRows.map(id => handleDelete(id, false)); // Pass false to skip individual confirmations
       Promise.all(deletePromises).then(() => {
         toast.success(`${selectedRows.length} record(s) deleted successfully`);
         setSelectedRows([]);

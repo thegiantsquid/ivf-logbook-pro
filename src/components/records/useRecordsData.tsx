@@ -32,8 +32,9 @@ export const useRecordsData = () => {
     setToDate(undefined);
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this record?')) {
+  const handleDelete = async (id: string, showConfirmation = true) => {
+    // Skip confirmation if showConfirmation is false (for batch deletes)
+    if (!showConfirmation || window.confirm('Are you sure you want to delete this record?')) {
       await deleteRecord(id);
     }
   };
