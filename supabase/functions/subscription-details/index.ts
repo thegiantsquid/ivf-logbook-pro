@@ -75,24 +75,40 @@ serve(async (req) => {
       subscription.stripe_subscription_id
     );
 
-    // Format response
-    const response = {
-      subscription: {
-        id: stripeSubscription.id,
-        status: stripeSubscription.status,
-        current_period_start: new Date(stripeSubscription.current_period_start * 1000).toISOString(),
-        current_period_end: new Date(stripeSubscription.current_period_end * 1000).toISOString(),
-        cancel_at_period_end: stripeSubscription.cancel_at_period_end,
-        cancel_at: stripeSubscription.cancel_at 
-          ? new Date(stripeSubscription.cancel_at * 1000).toISOString() 
-          : null,
-        canceled_at: stripeSubscription.canceled_at 
-          ? new Date(stripeSubscription.canceled_at * 1000).toISOString() 
-          : null,
-      },
+    // Format response data
+    const subscriptionData = {
+      id: stripeSubscription.id,
+      status: stripeSubscription.status,
+      current_period_start: new Date(stripeSubscription.current_period_start * 1000).toISOString(),
+      current_period_end: new Date(stripeSubscription.current_period_end * 1000).toISOString(),
+      cancel_at_period_end: stripeSubscription.cancel_at_period_end,
+      cancel_at: stripeSubscription.cancel_at 
+        ? new Date(stripeSubscription.cancel_at * 1000).toISOString() 
+        : null,
+      canceled_at: stripeSubscription.canceled_at 
+        ? new Date(stripeSubscription.canceled_at * 1000).toISOString() 
+        : null,
     };
 
-    return new Response(JSON.stringify(response), {
+    // Update the user_subscriptions table with the latest details
+    const { error: updateError } = await supabaseClient
+      .from("user_subscriptions")
+      .update({
+        subscription_status: subscriptionData.status,
+        current_period_start: subscriptionData.current_period_start,
+        current_period_end: subscriptionData.current_period_end,
+        cancel_at_period_end: subscriptionData.cancel_at_period_end,
+        cancel_at: subscriptionData.cancel_at,
+        canceled_at: subscriptionData.canceled_at,
+        updated_at: new Date().toISOString()
+      })
+      .eq("user_id", user.id);
+
+    if (updateError) {
+      console.error("Error updating subscription in database:", updateError);
+    }
+
+    return new Response(JSON.stringify({ subscription: subscriptionData }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

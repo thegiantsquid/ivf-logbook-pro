@@ -53,29 +53,22 @@ const Subscribe = () => {
 
   return (
     <div className="container max-w-4xl mx-auto py-8">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Upgrade to Pro</h1>
-        <p className="text-muted-foreground mt-2">
-          Get full access to all features and continue tracking your IVF procedures
-        </p>
-      </div>
-
-      <Card className="w-full border-gray-100 shadow-md">
-        <CardHeader className="border-b pb-6">
-          <CardTitle className="text-2xl">Professional Plan</CardTitle>
-          <CardDescription>Perfect for medical professionals</CardDescription>
+      <Card className="w-full border border-primary/10 bg-card shadow-sm hover:shadow-md transition-all">
+        <CardHeader className="border-b border-border/60 pb-6">
+          <CardTitle className="text-2xl text-card-foreground">Professional Plan</CardTitle>
+          <CardDescription className="text-card-foreground/80">Perfect for medical professionals</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold text-primary">$19</span>
-            <span className="text-muted-foreground">/month</span>
+            <span className="text-card-foreground/70">/month</span>
           </div>
           
           <ul className="space-y-4">
             {features.map((feature, index) => (
               <li key={index} className="flex items-start gap-2">
                 <Check className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                <span className="text-foreground">{feature.text}</span>
+                <span className="text-card-foreground">{feature.text}</span>
               </li>
             ))}
           </ul>

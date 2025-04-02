@@ -58,57 +58,50 @@ const SubscriptionManagement = () => {
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4">
       <div className="space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Subscription Management</h1>
-          <p className="text-muted-foreground mt-2">
-            View and manage your IVF Logbook Pro subscription
-          </p>
-        </div>
-        
         <SubscriptionDetails />
         
-        <Card className="border-primary/10">
+        <Card className="border-primary/10 bg-card">
           <CardHeader>
-            <CardTitle>Current Plan</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-card-foreground">Current Plan</CardTitle>
+            <CardDescription className="text-card-foreground/80">
               Professional subscription with all premium features
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xl font-semibold">$19/month</span>
+                <span className="text-xl font-semibold text-card-foreground">$19/month</span>
                 <Badge variant="secondary">Professional</Badge>
               </div>
               
               {hasActiveSubscription && (
-                <Badge variant="outline" className="text-green-500 bg-green-50 dark:bg-green-900/10">
+                <Badge variant="outline" className="text-green-600 bg-green-50/50 border-green-200">
                   Active
                 </Badge>
               )}
               
               {isInTrialPeriod && trialEndsAt && (
-                <Badge variant="outline" className="text-primary bg-primary/5">
+                <Badge variant="outline" className="text-primary bg-primary/5 border-primary/20">
                   Trial ends {format(new Date(trialEndsAt), 'MMM dd, yyyy')}
                 </Badge>
               )}
               
               {!hasActiveSubscription && !isInTrialPeriod && (
-                <Badge variant="outline" className="text-destructive bg-destructive/5">
+                <Badge variant="outline" className="text-destructive bg-destructive/5 border-destructive/20">
                   Inactive
                 </Badge>
               )}
             </div>
             
-            <Separator />
+            <Separator className="bg-border/60" />
             
             <div className="space-y-3">
-              <h3 className="font-medium">Features included:</h3>
+              <h3 className="font-medium text-card-foreground">Features included:</h3>
               <ul className="space-y-3">
                 {features.map((feature, index) => (
                   <li key={index} className="flex items-start gap-2">
                     <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                    <span>{feature.text}</span>
+                    <span className="text-card-foreground">{feature.text}</span>
                   </li>
                 ))}
               </ul>
