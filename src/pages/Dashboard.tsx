@@ -56,9 +56,7 @@ const Dashboard = () => {
                 <div className="text-3xl font-bold">
                   {loading ? '...' : recordCount}
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  IVF procedures logged
-                </p>
+                <p className="text-sm text-muted-foreground mt-1">Procedures logged</p>
               </CardContent>
             </Card>
 
@@ -90,7 +88,7 @@ const Dashboard = () => {
                 <CalendarDays className="h-5 w-5 text-primary" />
                 Recent Activity
               </CardTitle>
-              <CardDescription>Your latest IVF record updates</CardDescription>
+              <CardDescription>Your latest record updates</CardDescription>
             </CardHeader>
             <CardContent>
               {recordCount > 0 ? <div className="space-y-4">
