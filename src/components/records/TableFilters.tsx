@@ -30,6 +30,8 @@ interface TableFiltersProps {
   setShowIntroPage?: (show: boolean) => void;
   introText?: string;
   setIntroText?: (text: string) => void;
+  includeProcedureSummary?: boolean;
+  setIncludeProcedureSummary?: (include: boolean) => void;
 }
 
 const TableFilters: React.FC<TableFiltersProps> = ({
@@ -48,7 +50,9 @@ const TableFilters: React.FC<TableFiltersProps> = ({
   showIntroPage = false,
   setShowIntroPage = () => {},
   introText = '',
-  setIntroText = () => {}
+  setIntroText = () => {},
+  includeProcedureSummary = false,
+  setIncludeProcedureSummary = () => {}
 }) => {
   const [isFileDialogOpen, setIsFileDialogOpen] = useState(false);
   const [isPdfDialogOpen, setIsPdfDialogOpen] = useState(false);
@@ -209,6 +213,18 @@ const TableFilters: React.FC<TableFiltersProps> = ({
                   />
                 </div>
               )}
+              
+              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                <Label htmlFor="procedure-summary">Include procedure summary</Label>
+                <Switch 
+                  id="procedure-summary" 
+                  checked={includeProcedureSummary} 
+                  onCheckedChange={setIncludeProcedureSummary} 
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Adds a summary page with counts of procedures by type and hospital
+              </p>
             </div>
             <DialogFooter>
               <Button 

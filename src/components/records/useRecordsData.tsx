@@ -53,9 +53,10 @@ export const useRecordsData = () => {
       // Add all to pending deletions immediately
       setPendingDeletions(prev => [...prev, ...ids]);
       
-      // Delete all records
-      const deletePromises = ids.map(id => deleteRecord(id));
-      await Promise.all(deletePromises);
+      // Delete all records in sequence to ensure reliable UI updates
+      for (const id of ids) {
+        await deleteRecord(id);
+      }
       
       // Clear pending deletions after operation completes
       setPendingDeletions(prev => prev.filter(id => !ids.includes(id)));

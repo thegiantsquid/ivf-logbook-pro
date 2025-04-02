@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateTestRecords } from '@/utils/generateTestData';
@@ -36,6 +37,7 @@ const ViewRecords: React.FC = () => {
   });
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [showIntroPage, setShowIntroPage] = useState(false);
+  const [includeProcedureSummary, setIncludeProcedureSummary] = useState(false);
   const [introText, setIntroText] = useState(`I, ............................................................, hereby do solemnly declare that
 all information contained in this logbook is a true and accurate record of my professional
 experience from ............................. to ............................. representing the period of my
@@ -107,7 +109,8 @@ Signature: .....................................................................
       fromDate, 
       toDate,
       showIntroPage,
-      introText
+      introText,
+      includeProcedureSummary
     );
   };
 
@@ -191,6 +194,8 @@ Signature: .....................................................................
               setShowIntroPage={setShowIntroPage}
               introText={introText}
               setIntroText={setIntroText}
+              includeProcedureSummary={includeProcedureSummary}
+              setIncludeProcedureSummary={setIncludeProcedureSummary}
             />
           </div>
 
