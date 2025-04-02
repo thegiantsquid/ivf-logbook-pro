@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, Dispatch, SetStateAction } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +25,7 @@ interface TableFiltersProps {
   exportToPDF: () => void;
   generatingRecords: boolean;
   columnVisibility: Record<string, boolean>;
-  setColumnVisibility: (state: Record<string, boolean>) => void;
+  setColumnVisibility: Dispatch<SetStateAction<Record<string, boolean>>>;
   showIntroPage?: boolean;
   setShowIntroPage?: (show: boolean) => void;
   introText?: string;
@@ -163,10 +163,10 @@ const TableFilters: React.FC<TableFiltersProps> = ({
                 key={key}
                 checked={columnVisibility[key]}
                 onCheckedChange={(value) => {
-                  setColumnVisibility({
-                    ...columnVisibility,
+                  setColumnVisibility((prev) => ({
+                    ...prev,
                     [key]: value,
-                  });
+                  }));
                 }}
               >
                 {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}

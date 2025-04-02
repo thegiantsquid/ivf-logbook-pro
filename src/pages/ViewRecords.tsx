@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateTestRecords } from '@/utils/generateTestData';
@@ -183,7 +182,6 @@ Signature: .....................................................................
               toDate={toDate} 
               setToDate={setToDate} 
               clearDateFilters={clearDateFilters}
-
               handleGenerateTestData={handleGenerateTestData} 
               exportToPDF={handleExportToPDF} 
               generatingRecords={generatingRecords} 

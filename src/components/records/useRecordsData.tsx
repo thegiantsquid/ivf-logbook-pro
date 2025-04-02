@@ -57,8 +57,8 @@ export const useRecordsData = () => {
       const deletePromises = ids.map(id => deleteRecord(id));
       await Promise.all(deletePromises);
       
-      // Clear pending after operation complete
-      setPendingDeletions([]);
+      // Clear pending deletions after operation completes
+      setPendingDeletions(prev => prev.filter(id => !ids.includes(id)));
       return true;
     }
     return false;
