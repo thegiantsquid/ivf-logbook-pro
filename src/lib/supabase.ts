@@ -16,3 +16,8 @@ export const handleSupabaseError = (error: any) => {
   toast.error(errorMessage);
   return errorMessage;
 };
+
+// Function to get WebHook URL for documentation or setup
+export const getWebhookUrl = () => {
+  return `${supabaseUrl}/functions/v1/stripe-webhook`;
+};

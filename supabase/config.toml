@@ -69,5 +69,7 @@ url = ""
 # Port to serve Edge Functions on.
 port = 54321
 
+# Important: This ensures the stripe-webhook function is publicly accessible
 [functions.stripe-webhook]
 verify_jwt = false
+
