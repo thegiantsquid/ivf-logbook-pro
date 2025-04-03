@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.8.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.26.0";
@@ -106,6 +107,8 @@ serve(async (req) => {
             const { error: updateError } = await supabase
               .from("user_subscriptions")
               .update({
+                stripe_customer_id: customer.id,
+                stripe_subscription_id: subscription.id,
                 is_subscribed: true,
                 subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
                 updated_at: new Date().toISOString()
@@ -125,6 +128,8 @@ serve(async (req) => {
             const { error: updateError } = await supabase
               .from("user_subscriptions")
               .update({
+                stripe_customer_id: customer.id,
+                stripe_subscription_id: subscription.id,
                 is_subscribed: true,
                 subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
                 updated_at: new Date().toISOString()
