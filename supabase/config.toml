@@ -94,3 +94,4 @@ enable_confirmations = false
 [functions]
 [functions.stripe-webhook]
 verify_jwt = false
+
