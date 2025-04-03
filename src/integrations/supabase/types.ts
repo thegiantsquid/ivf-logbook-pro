@@ -160,6 +160,8 @@ export type Database = {
           created_at: string
           id: string
           is_subscribed: boolean
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           subscription_end_date: string | null
           trial_end_date: string
           trial_start_date: string
@@ -170,6 +172,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_subscribed?: boolean
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_end_date?: string | null
           trial_end_date: string
           trial_start_date?: string
@@ -180,6 +184,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_subscribed?: boolean
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_end_date?: string | null
           trial_end_date?: string
           trial_start_date?: string
