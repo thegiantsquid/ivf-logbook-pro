@@ -35,27 +35,71 @@ export const usePDFExport = () => {
         // Setup styling for the intro text
         doc.setFontSize(12);
         
-        // Format the intro text with better spacing and alignment
-        const textLines = doc.splitTextToSize(introText, 170);
+        // Split the intro text into paragraphs based on double newlines
+        const paragraphs = introText.split('\n\n');
+        let yPosition = 50;
         
-        // Position the text in the center of the page with some margin from the top
-        doc.text(textLines, 20, 50);
-        
-        // Add additional formatting like lines for signature spaces
-        doc.setLineWidth(0.3);
-        
-        // Draw signature/date lines in appropriate spots
-        const signatureLinePositions = introText.split('\n').reduce((positions, line, index) => {
-          if (line.includes('Signature:')) positions.push(index);
-          if (line.includes('Date:')) positions.push(index);
-          if (line.includes('ID No:')) positions.push(index);
-          return positions;
-        }, [] as number[]);
-        
-        // Draw signature lines where appropriate
-        signatureLinePositions.forEach(pos => {
-          const yPos = 50 + (pos * 6); // Adjust spacing based on font size
-          doc.line(70, yPos + 4, 170, yPos + 4);
+        // Process each paragraph
+        paragraphs.forEach(paragraph => {
+          // Split paragraph into lines for better formatting
+          const lines = paragraph.split('\n');
+          
+          lines.forEach(line => {
+            // Check if this is a signature line
+            if (line.includes('Signature:') || line.includes('Name:') || 
+                line.includes('ID No:') || line.includes('Date:')) {
+              
+              // Split at the colon
+              const [label, value] = line.split(':');
+              
+              // Draw the label
+              doc.setFont('helvetica', 'bold');
+              doc.text(label + ':', 20, yPosition);
+              
+              // Draw the signature line
+              doc.setFont('helvetica', 'normal');
+              doc.setLineWidth(0.2);
+              doc.line(60, yPosition, 180, yPosition);
+              
+              yPosition += 10;
+            } 
+            // Check if this is a date range line
+            else if (line.includes('from') && line.includes('to')) {
+              const formattedLines = doc.splitTextToSize(line, 170);
+              doc.text(formattedLines, 20, yPosition);
+              
+              // Find the position of "from" and "to" and add underlines
+              const fromIndex = line.indexOf('from');
+              const toIndex = line.indexOf('to');
+              
+              if (fromIndex > -1) {
+                doc.setLineWidth(0.2);
+                doc.line(20 + doc.getTextWidth(line.substring(0, fromIndex + 5)), 
+                         yPosition, 
+                         20 + doc.getTextWidth(line.substring(0, fromIndex + 25)), 
+                         yPosition);
+              }
+              
+              if (toIndex > -1) {
+                doc.setLineWidth(0.2);
+                doc.line(20 + doc.getTextWidth(line.substring(0, toIndex + 3)), 
+                         yPosition, 
+                         20 + doc.getTextWidth(line.substring(0, toIndex + 23)), 
+                         yPosition);
+              }
+              
+              yPosition += 10;
+            }
+            // Regular text line
+            else {
+              const formattedLines = doc.splitTextToSize(line, 170);
+              doc.text(formattedLines, 20, yPosition);
+              yPosition += 6 * formattedLines.length;
+            }
+          });
+          
+          // Add extra space between paragraphs
+          yPosition += 5;
         });
         
         // Add page number to intro page

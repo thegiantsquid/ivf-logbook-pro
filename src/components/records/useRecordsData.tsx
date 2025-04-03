@@ -44,7 +44,14 @@ export const useRecordsData = () => {
     if (!showConfirmation || window.confirm('Are you sure you want to delete this record?')) {
       // Add to pending deletions immediately for UI feedback
       setPendingDeletions(prev => [...prev, id]);
-      await deleteRecord(id);
+      
+      // Perform the actual deletion
+      const success = await deleteRecord(id);
+      
+      // If deletion failed, remove from pending
+      if (!success) {
+        setPendingDeletions(prev => prev.filter(pendingId => pendingId !== id));
+      }
     }
   };
 
@@ -54,13 +61,15 @@ export const useRecordsData = () => {
       setPendingDeletions(prev => [...prev, ...ids]);
       
       // Delete all records in sequence to ensure reliable UI updates
-      for (const id of ids) {
-        await deleteRecord(id);
+      const results = await Promise.all(ids.map(id => deleteRecord(id)));
+      
+      // Remove unsuccessful deletions from pending
+      const failedIds = ids.filter((_, index) => !results[index]);
+      if (failedIds.length > 0) {
+        setPendingDeletions(prev => prev.filter(id => !failedIds.includes(id)));
       }
       
-      // Clear pending deletions after operation completes
-      setPendingDeletions(prev => prev.filter(id => !ids.includes(id)));
-      return true;
+      return results.every(Boolean);
     }
     return false;
   };

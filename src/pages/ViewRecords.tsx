@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateTestRecords } from '@/utils/generateTestData';
@@ -162,6 +161,7 @@ Signature: .....................................................................
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel()
   });
+
   return <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Patient Records</h2>
