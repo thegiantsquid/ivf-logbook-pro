@@ -17,39 +17,40 @@ serve(async (req) => {
   try {
     console.log("Subscription details endpoint called");
     
-    // Get the authorization header from the request
-    const authHeader = req.headers.get("Authorization");
-    
-    // Create a Supabase client - use service role key for admin access to ensure we can update tables
+    // Create a Supabase client with admin access using service role key
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
     );
-    
+
+    // Get the authorization header from the request
+    const authHeader = req.headers.get("Authorization");
+    console.log("Authorization header present:", !!authHeader);
+
     // Create a Supabase client with the auth header if provided
     const supabaseClient = authHeader ? createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      {
-        global: { headers: { Authorization: authHeader } },
-      }
+      { global: { headers: { Authorization: authHeader } } }
     ) : supabaseAdmin;
 
     // Get the user from the request if auth header is provided
     let userId;
     
     if (authHeader) {
-      const {
-        data: { user },
-        error: userError
-      } = await supabaseClient.auth.getUser();
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
       
       if (userError) {
         console.error("Error getting user:", userError.message);
-        throw new Error("Unauthorized or invalid token");
+        return new Response(JSON.stringify({ error: "Unauthorized or invalid token" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
       
       if (!user) {
+        console.error("No user found from auth token");
         return new Response(JSON.stringify({ error: "No user found" }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
