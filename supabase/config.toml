@@ -1,6 +1,4 @@
 
-# A string used to distinguish different Supabase projects on the same host. Defaults to the working
-# directory name when running `supabase init`.
 project_id = "bmyrltwtvpfrbdiwoqem"
 
 [api]
@@ -8,7 +6,7 @@ project_id = "bmyrltwtvpfrbdiwoqem"
 port = 54321
 # Schemas to expose in your API. Tables, views and stored procedures in this schema will get API
 # endpoints. public and storage are always included.
-schemas = ["public", "storage", "graphql_public"]
+schemas = ["public", "storage"]
 # Extra schemas to add to the search_path of every request. public is always included.
 extra_search_path = ["public", "extensions"]
 # The maximum number of rows returns from a view, table, or stored procedure. Limits payload size
@@ -44,7 +42,7 @@ file_size_limit = "50MiB"
 site_url = "http://localhost:3000"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 additional_redirect_urls = ["https://localhost:3000"]
-# How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 seconds (1
+# How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 seconds (one
 # week).
 jwt_expiry = 3600
 # Allow/disallow new user signups to your project.
@@ -59,39 +57,39 @@ double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
 enable_confirmations = false
 
-# Uncomment the following to customize the email template used for confirmations.
-# [auth.email.template.confirmation]
-# subject = "Confirm Your Email"
-# content_path = "./supabase/templates/confirmation.html"
-
 # Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
 # `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin`, `notion`, `twitch`,
 # `twitter`, `slack`, `spotify`, `workos`, `zoom`.
-# [auth.external.apple]
-# enabled = true
-# client_id = ""
-# secret = ""
-# Additional scopes to request from this provider. The scopes `email` and `profile` are always
-# requested.
-# scopes = []
-# The URL of the provider if self-hosted. Leave empty for the production URL.
-# url = ""
-# Redirect to a mobile app deep link if coming from a mobile device
-# [auth.external.apple.mobile_config]
-# # The deeplink URL
-# deeplink = "com.example.app://auth/callback"
-# # The user agent regex pattern for identifying the requests coming from the mobile device
-# user_agent = ""
+[auth.external.apple]
+enabled = false
+client_id = ""
+secret = ""
+# Overrides the default auth redirectUrl.
+redirect_uri = ""
+# Overrides the default auth provider URL. Used to support self-hosted gitlab, single-tenant Azure,
+# or any other third-party OIDC providers.
+url = ""
 
-# Use a custom claim to specify the role of the user. This is a simple solution and requires one of
-# the standard JWTs (`exp`, `iat`, `nbf`) to be present at the top-level of the JWT.
-# Alternatively, the JWT claim `aud` can be updated to `service_role` in order to permit service
-# role permissions. JWTs with a non-standard audience will be ignored. This is an advanced feature
-# that is likely only useful in multi-tenant applications.
-# [auth.jwt_custom_claims]
-# role = "role"
+[auth.external.google]
+enabled = false
+client_id = "150624708440-dmm8umeu8d0ep9ek4qt86ogoj76te013.apps.googleusercontent.com"
+secret = "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"
+# Overrides the default auth redirectUrl.
+redirect_uri = ""
+# Overrides the default auth provider URL. Used to support self-hosted gitlab, single-tenant Azure,
+# or any other third-party OIDC providers.
+url = ""
+
+[analytics]
+enabled = false
+port = 54327
+vector_port = 54328
+# Setup BigQuery project to enable log viewer on local development stack.
+# See: https://supabase.com/docs/guides/platform/logs#enabling-local-log-streaming
+gcp_project_id = ""
+gcp_project_number = ""
+gcp_jwt_path = "supabase/gcloud.json"
 
 [functions]
 [functions.stripe-webhook]
 verify_jwt = false
-

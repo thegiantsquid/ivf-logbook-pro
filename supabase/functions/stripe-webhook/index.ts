@@ -49,7 +49,7 @@ serve(async (req) => {
     // Create a Supabase client for database operations
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "", // Using service role key for admin access
       { auth: { persistSession: false } }
     );
 
@@ -66,9 +66,11 @@ serve(async (req) => {
           const customer = await stripe.customers.retrieve(checkoutSession.customer.toString());
           
           if (!customer.deleted && customer.email) {
-            // Find the user by email
+            console.log(`Looking for user with email: ${customer.email}`);
+            
+            // Find the user by email using auth.users table directly with service role
             const { data: users, error: userError } = await supabaseClient
-              .from("auth.users")
+              .from("users")
               .select("id")
               .eq("email", customer.email)
               .limit(1);
@@ -80,23 +82,59 @@ serve(async (req) => {
 
             if (users && users.length > 0) {
               const userId = users[0].id;
+              console.log(`User found with ID: ${userId}`);
               
-              // Update user subscription data
-              const { error: updateError } = await supabaseClient
+              // Check if user subscription record exists
+              const { data: existingSub, error: checkError } = await supabaseClient
                 .from("user_subscriptions")
-                .update({
-                  is_subscribed: true,
-                  stripe_customer_id: checkoutSession.customer.toString(),
-                  stripe_subscription_id: checkoutSession.subscription.toString(),
-                  subscription_status: "active",
-                  updated_at: new Date().toISOString()
-                })
-                .eq("user_id", userId);
+                .select("id")
+                .eq("user_id", userId)
+                .single();
+                
+              if (checkError && checkError.code !== "PGRST116") { // Not found error code
+                console.error("Error checking existing subscription:", checkError);
+              }
+              
+              if (existingSub) {
+                // Update existing subscription
+                console.log(`Updating existing subscription for user ${userId}`);
+                const { error: updateError } = await supabaseClient
+                  .from("user_subscriptions")
+                  .update({
+                    is_subscribed: true,
+                    stripe_customer_id: checkoutSession.customer.toString(),
+                    stripe_subscription_id: checkoutSession.subscription.toString(),
+                    subscription_status: "active",
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq("user_id", userId);
 
-              if (updateError) {
-                console.error("Error updating subscription:", updateError);
+                if (updateError) {
+                  console.error("Error updating subscription:", updateError);
+                } else {
+                  console.log(`Subscription updated for user ${userId}`);
+                }
               } else {
-                console.log(`Subscription updated for user ${userId}`);
+                // Insert new subscription record
+                console.log(`Creating new subscription for user ${userId}`);
+                const { error: insertError } = await supabaseClient
+                  .from("user_subscriptions")
+                  .insert({
+                    user_id: userId,
+                    is_subscribed: true,
+                    stripe_customer_id: checkoutSession.customer.toString(),
+                    stripe_subscription_id: checkoutSession.subscription.toString(),
+                    subscription_status: "active",
+                    trial_start_date: new Date().toISOString(),
+                    trial_end_date: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                  });
+
+                if (insertError) {
+                  console.error("Error creating subscription:", insertError);
+                } else {
+                  console.log(`New subscription created for user ${userId}`);
+                }
               }
             } else {
               console.error("User not found with email:", customer.email);
@@ -128,6 +166,7 @@ serve(async (req) => {
           
           if (subUsers && subUsers.length > 0) {
             const userId = subUsers[0].user_id;
+            console.log(`User found with ID: ${userId}`);
             
             // Update the user's subscription information
             const { error: updateError } = await supabaseClient
@@ -146,6 +185,8 @@ serve(async (req) => {
             } else {
               console.log(`Subscription period updated for user ${userId}`);
             }
+          } else {
+            console.error("No user found with customer ID:", invoice.customer.toString());
           }
         }
         break;
@@ -168,6 +209,7 @@ serve(async (req) => {
         
         if (delSubUsers && delSubUsers.length > 0) {
           const userId = delSubUsers[0].user_id;
+          console.log(`User found with ID: ${userId}`);
           
           // Update the user's subscription information
           const { error: updateError } = await supabaseClient
@@ -185,6 +227,8 @@ serve(async (req) => {
           } else {
             console.log(`Subscription cancelled for user ${userId}`);
           }
+        } else {
+          console.error("No user found with subscription ID:", deletedSubscription.id);
         }
         break;
 
@@ -206,6 +250,7 @@ serve(async (req) => {
         
         if (upSubUsers && upSubUsers.length > 0) {
           const userId = upSubUsers[0].user_id;
+          console.log(`User found with ID: ${userId}`);
           
           // Update the user's subscription information
           const { error: updateError } = await supabaseClient
@@ -230,6 +275,8 @@ serve(async (req) => {
           } else {
             console.log(`Subscription details updated for user ${userId}`);
           }
+        } else {
+          console.error("No user found with subscription ID:", updatedSubscription.id);
         }
         break;
 
