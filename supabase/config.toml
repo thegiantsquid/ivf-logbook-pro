@@ -94,3 +94,5 @@ gcp_jwt_path = "supabase/gcloud.json"
 [functions.stripe-webhook]
 verify_jwt = false
 
+[functions.subscription-details]
+verify_jwt = false

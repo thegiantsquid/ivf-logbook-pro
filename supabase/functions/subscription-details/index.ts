@@ -15,34 +15,68 @@ serve(async (req) => {
   }
 
   try {
+    console.log("Subscription details endpoint called");
+    
     // Get the authorization header from the request
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "No authorization header" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Create a Supabase client with the auth header
-    const supabaseClient = createClient(
+    
+    // Create a Supabase client - use service role key for admin access to ensure we can update tables
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    );
+    
+    // Create a Supabase client with the auth header if provided
+    const supabaseClient = authHeader ? createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       {
         global: { headers: { Authorization: authHeader } },
       }
-    );
+    ) : supabaseAdmin;
 
-    // Get the JWT claims from the request auth header
-    const {
-      data: { user },
-    } = await supabaseClient.auth.getUser();
-
-    if (!user) {
-      return new Response(JSON.stringify({ error: "No user found" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Get the user from the request if auth header is provided
+    let userId;
+    
+    if (authHeader) {
+      const {
+        data: { user },
+        error: userError
+      } = await supabaseClient.auth.getUser();
+      
+      if (userError) {
+        console.error("Error getting user:", userError.message);
+        throw new Error("Unauthorized or invalid token");
+      }
+      
+      if (!user) {
+        return new Response(JSON.stringify({ error: "No user found" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      
+      userId = user.id;
+      console.log("User found with ID:", userId);
+    } else {
+      // This would be for admin access or webhook calls
+      console.log("No auth header provided, assuming admin/webhook access");
+      
+      // Check for user_id in request body for webhook scenarios
+      try {
+        const requestData = await req.json();
+        userId = requestData.user_id;
+        console.log("Using user_id from request body:", userId);
+      } catch (e) {
+        console.log("No request body or user_id provided");
+      }
+      
+      if (!userId) {
+        return new Response(JSON.stringify({ error: "No user_id provided" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Initialize Stripe
@@ -51,13 +85,29 @@ serve(async (req) => {
     });
 
     // Get the customer ID from the database
-    const { data: subscription, error: subscriptionError } = await supabaseClient
+    const { data: subscription, error: subscriptionError } = await supabaseAdmin
       .from("user_subscriptions")
       .select("stripe_customer_id, stripe_subscription_id")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .single();
 
-    if (subscriptionError || !subscription?.stripe_subscription_id) {
+    if (subscriptionError) {
+      console.error("Error fetching subscription:", subscriptionError.message);
+      return new Response(
+        JSON.stringify({ 
+          error: "Error fetching subscription",
+          details: subscriptionError.message,
+          subscription: null
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+    
+    if (!subscription?.stripe_subscription_id) {
+      console.log("No subscription found for user:", userId);
       return new Response(
         JSON.stringify({ 
           error: "No subscription found",
@@ -70,10 +120,14 @@ serve(async (req) => {
       );
     }
 
+    console.log("Found subscription:", subscription);
+
     // Get the subscription details from Stripe
     const stripeSubscription = await stripe.subscriptions.retrieve(
       subscription.stripe_subscription_id
     );
+
+    console.log("Retrieved Stripe subscription:", stripeSubscription.id, "Status:", stripeSubscription.status);
 
     // Format response data
     const subscriptionData = {
@@ -91,9 +145,10 @@ serve(async (req) => {
     };
 
     // Update the user_subscriptions table with the latest details
-    const { error: updateError } = await supabaseClient
+    const { error: updateError } = await supabaseAdmin
       .from("user_subscriptions")
       .update({
+        is_subscribed: stripeSubscription.status === "active",
         subscription_status: subscriptionData.status,
         current_period_start: subscriptionData.current_period_start,
         current_period_end: subscriptionData.current_period_end,
@@ -102,12 +157,25 @@ serve(async (req) => {
         canceled_at: subscriptionData.canceled_at,
         updated_at: new Date().toISOString()
       })
-      .eq("user_id", user.id);
+      .eq("user_id", userId);
 
     if (updateError) {
-      console.error("Error updating subscription in database:", updateError);
+      console.error("Error updating subscription in database:", updateError.message);
+      return new Response(
+        JSON.stringify({ 
+          error: "Error updating subscription",
+          details: updateError.message,
+          subscription: subscriptionData 
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
     }
 
+    console.log("Successfully updated subscription in database for user:", userId);
+    
     return new Response(JSON.stringify({ subscription: subscriptionData }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

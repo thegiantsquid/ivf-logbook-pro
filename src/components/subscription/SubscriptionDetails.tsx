@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/lib/toast';
 
 interface SubscriptionData {
   currentPeriodEnd?: string;
@@ -25,9 +26,13 @@ export const SubscriptionDetails = () => {
       if (hasActiveSubscription) {
         setLoadingDetails(true);
         try {
+          console.log('Fetching subscription details');
           const { data: { session } } = await supabase.auth.getSession();
           
-          if (!session) return;
+          if (!session) {
+            console.error('No active session found');
+            throw new Error('No active session');
+          }
           
           const { data, error } = await supabase.functions.invoke('subscription-details', {
             headers: {
@@ -35,19 +40,29 @@ export const SubscriptionDetails = () => {
             }
           });
           
-          if (error) throw error;
+          if (error) {
+            console.error('Error from subscription-details function:', error);
+            throw error;
+          }
           
           if (data && data.subscription) {
+            console.log('Subscription details received:', data.subscription);
             setSubscriptionData({
               currentPeriodEnd: data.subscription.current_period_end,
               nextInvoice: data.subscription.current_period_end,
               status: data.subscription.status
             });
-            
-            console.log("Subscription details fetched:", data.subscription);
+          } else if (data && data.error) {
+            console.error('Error in subscription details response:', data.error);
+            throw new Error(data.error);
+          } else {
+            console.error('Unexpected response format:', data);
+            throw new Error('Unexpected response format');
           }
         } catch (error) {
           console.error('Error fetching subscription details:', error);
+          toast.error('Could not fetch subscription details');
+          
           // Fallback to estimation
           const estimatedNextDate = new Date();
           estimatedNextDate.setDate(estimatedNextDate.getDate() + 30);

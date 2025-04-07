@@ -42,7 +42,10 @@ export const useSubscription = () => {
           }
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error calling check-subscription function:', error);
+          throw error;
+        }
 
         setStatus({
           isLoading: false,
@@ -52,19 +55,23 @@ export const useSubscription = () => {
         });
       } catch (error) {
         console.error('Error checking subscription:', error);
-        toast.error('Failed to check subscription status');
         
         // Fallback to database check
         try {
+          console.log('Falling back to database check for subscription');
           const { data: subscription, error } = await supabase
             .from('user_subscriptions')
             .select('*')
             .eq('user_id', currentUser.uid)
             .maybeSingle();
 
-          if (error) throw error;
+          if (error) {
+            console.error('Error with database fallback:', error);
+            throw error;
+          }
 
           if (!subscription) {
+            console.log('No subscription found in database');
             setStatus({
               isLoading: false,
               hasActiveSubscription: false,
@@ -75,10 +82,17 @@ export const useSubscription = () => {
           }
 
           const now = new Date();
-          const trialEndDate = new Date(subscription.trial_end_date);
-          const isInTrial = now < trialEndDate;
+          const trialEndDate = subscription.trial_end_date ? new Date(subscription.trial_end_date) : null;
+          const isInTrial = trialEndDate && now < trialEndDate;
           const hasActiveSubscription = subscription.is_subscribed && 
             (!subscription.subscription_end_date || new Date(subscription.subscription_end_date) > now);
+
+          console.log('Database subscription status:', { 
+            isInTrial, 
+            hasActiveSubscription, 
+            is_subscribed: subscription.is_subscribed,
+            subscription_status: subscription.subscription_status
+          });
 
           setStatus({
             isLoading: false,
@@ -88,6 +102,7 @@ export const useSubscription = () => {
           });
         } catch (dbError) {
           console.error('Error with database fallback:', dbError);
+          toast.error('Failed to check subscription status');
           setStatus(prev => ({ ...prev, isLoading: false }));
         }
       }
