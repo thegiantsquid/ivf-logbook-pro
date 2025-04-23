@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import Stripe from "https://esm.sh/stripe@12.18.0?dts";
@@ -195,11 +194,15 @@ serve(async (req) => {
         subscription.stripe_subscription_id
       );
       log("Retrieved Stripe subscription", stripeSubscription.id);
+      
+      // Explicitly log the status to help debug
+      log("Subscription status from Stripe", stripeSubscription.status);
     } catch (error) {
       log("Error retrieving subscription from Stripe", error.message);
       
       // If the subscription doesn't exist in Stripe anymore, update our DB
       if (error.code === 'resource_missing') {
+        log("Subscription no longer exists in Stripe, marking as cancelled in database");
         await supabaseAdmin
           .from("user_subscriptions")
           .update({
@@ -210,10 +213,12 @@ serve(async (req) => {
           .eq("user_id", userId);
       }
       
+      // Return more detailed error
       return new Response(
         JSON.stringify({ 
           error: "Error retrieving subscription",
           details: error.message,
+          code: error.code || 'unknown',
           subscription: null
         }),
         {

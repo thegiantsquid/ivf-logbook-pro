@@ -1,17 +1,31 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Check, Star, Calendar, Award, FileEdit, FileSearch, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const Subscribe = () => {
-  const { hasActiveSubscription, isInTrialPeriod, trialEndsAt } = useSubscription();
+  const { hasActiveSubscription, isInTrialPeriod, trialEndsAt, refreshSubscription } = useSubscription();
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
+  // Check URL parameters for subscription status
+  useEffect(() => {
+    const subscriptionStatus = searchParams.get('subscription');
+    
+    if (subscriptionStatus === 'success') {
+      toast.success('Thank you for subscribing! Processing your subscription...');
+      // Force refresh subscription status after successful checkout
+      refreshSubscription();
+    } else if (subscriptionStatus === 'canceled') {
+      toast.info('Subscription process canceled');
+    }
+  }, [searchParams, refreshSubscription]);
   
   const features = [
     { icon: FileEdit, text: "Add unlimited IVF procedure records" },

@@ -7,6 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { CalendarDays, FilePlus, FileText, BarChart2 } from 'lucide-react';
 import { TrialBanner } from '@/components/subscription/TrialBanner';
 import { SubscriptionDetails } from '@/components/subscription/SubscriptionDetails';
+import { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useSubscription } from '@/hooks/useSubscription';
+import { toast } from '@/lib/toast';
+
 const Dashboard = () => {
   const {
     records,
@@ -34,6 +39,20 @@ const Dashboard = () => {
     description: record.procedure || "IVF Procedure",
     date: getRelativeTimeString(new Date(record.date))
   }));
+
+  const { refreshSubscription } = useSubscription();
+  const [searchParams] = useSearchParams();
+  
+  useEffect(() => {
+    const subscription = searchParams.get('subscription');
+    
+    if (subscription === 'success') {
+      toast.success('Thank you for subscribing! Your account has been upgraded.');
+      // Force refresh subscription status
+      refreshSubscription();
+    }
+  }, [searchParams, refreshSubscription]);
+
   return <div className="container mx-auto py-6 px-4 space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight mb-1">Dashboard</h1>
@@ -199,4 +218,5 @@ const Dashboard = () => {
       </div>
     </div>;
 };
+
 export default Dashboard;

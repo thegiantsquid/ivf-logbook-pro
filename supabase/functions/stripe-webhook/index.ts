@@ -97,13 +97,15 @@ serve(async (req) => {
               const userId = matchingUser.id;
               console.log(`User found through auth admin API: ${userId}`);
               
-              // Update user subscription
+              // Update user subscription with more detailed logging
+              console.log(`Updating subscription for user ${userId}`);
               await updateSubscription(supabaseAdmin, userId, checkoutSession, stripe);
             } else if (users && users.length > 0) {
               const userId = users[0].id;
               console.log(`User found with ID: ${userId}`);
               
-              // Update user subscription
+              // Update user subscription with more detailed logging
+              console.log(`Updating subscription for user ${userId}`);
               await updateSubscription(supabaseAdmin, userId, checkoutSession, stripe);
             } else {
               console.error("User not found with email:", customer.email);
@@ -146,6 +148,7 @@ async function updateSubscription(supabase, userId, checkoutSession, stripe) {
   
   // Get subscription details from Stripe
   const subscription = await stripe.subscriptions.retrieve(checkoutSession.subscription.toString());
+  console.log(`Retrieved subscription details from Stripe: ${JSON.stringify(subscription.status)}`);
   
   // Check if user subscription record exists
   const { data: existingSub, error: checkError } = await supabase
@@ -167,6 +170,9 @@ async function updateSubscription(supabase, userId, checkoutSession, stripe) {
     current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
     updated_at: new Date().toISOString()
   };
+  
+  // Log the data we're about to insert/update
+  console.log(`Subscription data to update: ${JSON.stringify(updateData)}`);
   
   if (existingSub) {
     // Update existing subscription
