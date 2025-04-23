@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Check, Star, Calendar, Award, FileEdit, FileSearch, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
+import { useNavigate } from 'react-router-dom';
 
 const Subscribe = () => {
   const { hasActiveSubscription, isInTrialPeriod, trialEndsAt } = useSubscription();
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
   
   const features = [
     { icon: FileEdit, text: "Add unlimited IVF procedure records" },
@@ -27,8 +29,11 @@ const Subscribe = () => {
       
       if (!session) {
         toast.error('You must be logged in to subscribe');
+        navigate('/login');
         return;
       }
+      
+      toast.info('Preparing checkout...');
       
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         headers: {
@@ -37,7 +42,12 @@ const Subscribe = () => {
       });
       
       if (error) {
-        throw error;
+        console.error('Error from edge function:', error);
+        throw new Error(error.message || 'Failed to create checkout session');
+      }
+      
+      if (!data || !data.url) {
+        throw new Error('No checkout URL returned from server');
       }
       
       // Redirect to Stripe checkout
@@ -45,7 +55,7 @@ const Subscribe = () => {
       
     } catch (error) {
       console.error('Error creating checkout session:', error);
-      toast.error('Failed to create checkout session');
+      toast.error(error instanceof Error ? error.message : 'Failed to create checkout session');
     } finally {
       setIsLoading(false);
     }

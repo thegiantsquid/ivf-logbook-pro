@@ -20,6 +20,8 @@ serve(async (req) => {
   );
 
   try {
+    console.log('Starting checkout session creation...');
+    
     // Get the user data from the auth header
     const authHeader = req.headers.get('Authorization')!;
     const token = authHeader.replace('Bearer ', '');
@@ -30,6 +32,8 @@ serve(async (req) => {
     if (!email) {
       throw new Error('No email found');
     }
+    
+    console.log(`Creating checkout for user: ${email}`);
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
@@ -50,6 +54,7 @@ serve(async (req) => {
     }
 
     const price_id = prices.data[0].id;
+    console.log(`Using price ID: ${price_id}`);
 
     // Check if customer already exists
     const customers = await stripe.customers.list({
@@ -60,7 +65,10 @@ serve(async (req) => {
     let customer_id = undefined;
     if (customers.data.length > 0) {
       customer_id = customers.data[0].id;
-      // Check if already subscribed to this price
+      console.log(`Found existing customer: ${customer_id}`);
+      
+      // Check if already subscribed to this price - but don't throw error
+      // Just log it and continue with checkout creation
       const subscriptions = await stripe.subscriptions.list({
         customer: customers.data[0].id,
         status: 'active',
@@ -69,8 +77,10 @@ serve(async (req) => {
       });
 
       if (subscriptions.data.length > 0) {
-        throw new Error("You are already subscribed to this plan");
+        console.log(`Customer already has an active subscription to this plan. Creating new checkout anyway.`);
       }
+    } else {
+      console.log('No existing customer found, will create new customer');
     }
 
     console.log('Creating payment session...');
@@ -86,6 +96,8 @@ serve(async (req) => {
       mode: 'subscription',
       success_url: `${req.headers.get('origin')}/dashboard?subscription=success`,
       cancel_url: `${req.headers.get('origin')}/subscribe?subscription=canceled`,
+      allow_promotion_codes: true,
+      billing_address_collection: 'auto',
     });
 
     console.log('Payment session created:', session.id);
