@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -6,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useLocation, Link } from 'react-router-dom';
 import { LogOut, User, Settings } from 'lucide-react';
+
 const getPageTitle = (pathname: string): string => {
   const routes: Record<string, string> = {
     '/': 'Dashboard',
@@ -17,6 +19,7 @@ const getPageTitle = (pathname: string): string => {
   };
   return routes[pathname] || 'IVF Logbook Pro';
 };
+
 const Navbar: React.FC = () => {
   const {
     currentUser,
@@ -24,10 +27,12 @@ const Navbar: React.FC = () => {
   } = useAuth();
   const location = useLocation();
   const pageTitle = getPageTitle(location.pathname);
+  
   const getUserInitials = (): string => {
     if (!currentUser?.displayName) return '?';
     return currentUser.displayName.split(' ').map(name => name.charAt(0)).join('').toUpperCase();
   };
+  
   return <header className="sticky top-0 z-10 border-b bg-primary shadow-md">
       <div className="h-16 flex items-center justify-between px-3 sm:px-4 bg-slate-900">
         <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
@@ -80,4 +85,5 @@ const Navbar: React.FC = () => {
       </div>
     </header>;
 };
+
 export default Navbar;

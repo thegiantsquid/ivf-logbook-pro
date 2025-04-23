@@ -14,11 +14,13 @@ export interface IVFRecord {
   createdBy?: string;
 }
 
+// Creating a more compatible User interface that works with our code
 export interface User {
-  uid: string;
+  id: string;          // Supabase's User.id
   email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
+  displayName?: string | null;  // Custom field from user metadata
+  photoURL?: string | null;     // Custom field from user metadata
+  uid?: string;        // Alias for id to maintain compatibility
 }
 
 export type ProcedureType = string;

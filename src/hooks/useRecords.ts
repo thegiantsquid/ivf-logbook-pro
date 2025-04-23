@@ -66,7 +66,7 @@ export const useRecords = () => {
       const { data, error } = await supabase
         .from(USER_PROCEDURE_TYPES_TABLE)
         .select('type')
-        .eq('user_id', currentUser.uid);
+        .eq('user_id', currentUser.id);
         
       if (error) throw error;
       
@@ -85,7 +85,7 @@ export const useRecords = () => {
       const { data, error } = await supabase
         .from(USER_HOSPITAL_TYPES_TABLE)
         .select('type')
-        .eq('user_id', currentUser.uid);
+        .eq('user_id', currentUser.id);
         
       if (error) throw error;
       
@@ -105,7 +105,7 @@ export const useRecords = () => {
       const { data: existingTypes } = await supabase
         .from(USER_PROCEDURE_TYPES_TABLE)
         .select('*')
-        .eq('user_id', currentUser.uid)
+        .eq('user_id', currentUser.id)
         .eq('type', type);
         
       if (existingTypes && existingTypes.length > 0) {
@@ -116,7 +116,7 @@ export const useRecords = () => {
       // Add the new type
       const { error } = await supabase
         .from(USER_PROCEDURE_TYPES_TABLE)
-        .insert([{ user_id: currentUser.uid, type }]);
+        .insert([{ user_id: currentUser.id, type }]);
         
       if (error) throw error;
       
@@ -138,7 +138,7 @@ export const useRecords = () => {
       const { data: existingTypes } = await supabase
         .from(USER_HOSPITAL_TYPES_TABLE)
         .select('*')
-        .eq('user_id', currentUser.uid)
+        .eq('user_id', currentUser.id)
         .eq('type', type);
         
       if (existingTypes && existingTypes.length > 0) {
@@ -149,7 +149,7 @@ export const useRecords = () => {
       // Add the new type
       const { error } = await supabase
         .from(USER_HOSPITAL_TYPES_TABLE)
-        .insert([{ user_id: currentUser.uid, type }]);
+        .insert([{ user_id: currentUser.id, type }]);
         
       if (error) throw error;
       
@@ -197,7 +197,7 @@ export const useRecords = () => {
           complication_notes: record.complicationNotes,
           operation_notes: record.operationNotes,
           hospital: record.hospital,
-          created_by: currentUser.uid,
+          created_by: currentUser.id,
         }])
         .select();
       

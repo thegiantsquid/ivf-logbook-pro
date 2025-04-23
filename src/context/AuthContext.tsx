@@ -1,8 +1,9 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { toast } from '@/lib/toast';
 import { supabase, handleSupabaseError } from '@/lib/supabase';
+import { User } from '@/types';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -31,7 +32,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Convert Supabase user to our User type
   const formatUser = (session: Session | null): User | null => {
     if (!session?.user) return null;
-    return session.user;
+    
+    const supabaseUser = session.user;
+    // Adapt Supabase User to our User interface
+    return {
+      id: supabaseUser.id,
+      uid: supabaseUser.id, // Add uid as an alias for id
+      email: supabaseUser.email,
+      displayName: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || null,
+      photoURL: supabaseUser.user_metadata?.avatar_url || null,
+    };
   };
 
   useEffect(() => {
