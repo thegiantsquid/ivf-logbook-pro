@@ -30,19 +30,37 @@ export const useSubscription = () => {
       }
 
       try {
-        const { data: session } = await supabase.auth.getSession();
+        // First, get the current session
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
-        if (!session.session) {
+        if (sessionError) {
+          console.error("Error getting session:", sessionError);
+          throw sessionError;
+        }
+        
+        if (!sessionData.session) {
           console.log("No active session found");
           setStatus(prev => ({ ...prev, isLoading: false, error: "No active session" }));
           return;
         }
         
-        console.log("Calling subscription-details function");
-        // Call our edge function to check subscription
+        // Get a fresh access token
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        
+        if (refreshError) {
+          console.error("Error refreshing session:", refreshError);
+          // Continue with existing session
+        }
+        
+        // Use the most recent session available
+        const session = refreshData?.session || sessionData.session;
+        
+        console.log("Calling subscription-details function with token:", session.access_token.substring(0, 10) + "...");
+        
+        // Call our edge function to check subscription with fresh token
         const { data, error } = await supabase.functions.invoke('subscription-details', {
           headers: {
-            Authorization: `Bearer ${session.session.access_token}`
+            Authorization: `Bearer ${session.access_token}`
           }
         });
 
@@ -53,12 +71,12 @@ export const useSubscription = () => {
           throw error;
         }
 
-        if (data.error) {
+        if (data && data.error) {
           console.log("Function returned error:", data.error);
           // No need to throw here, we'll handle the DB fallback
         }
 
-        if (data.subscription) {
+        if (data && data.subscription) {
           console.log("Subscription details received:", data.subscription);
           // Process subscription data from the function
           setStatus({
