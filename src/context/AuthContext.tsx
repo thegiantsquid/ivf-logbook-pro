@@ -1,9 +1,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User } from '@/types';
+import { User, Session } from '@supabase/supabase-js';
 import { toast } from '@/lib/toast';
 import { supabase, handleSupabaseError } from '@/lib/supabase';
-import { Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -27,32 +26,38 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<Session | null>(null);
 
   // Convert Supabase user to our User type
   const formatUser = (session: Session | null): User | null => {
     if (!session?.user) return null;
-    
-    const user = session.user;
-    return {
-      uid: user.id,
-      email: user.email,
-      displayName: user.user_metadata?.full_name || user.email?.split('@')[0],
-      photoURL: user.user_metadata?.avatar_url,
-    };
+    return session.user;
   };
 
   useEffect(() => {
-    // Initial session check
-    const initialSession = supabase.auth.getSession().then(({ data: { session } }) => {
-      setCurrentUser(formatUser(session));
+    // Set up auth state change listener FIRST to prevent missing auth events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      console.log('Auth state changed:', _event);
+      setSession(currentSession);
+      setCurrentUser(formatUser(currentSession));
       setLoading(false);
     });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setCurrentUser(formatUser(session));
-      setLoading(false);
-    });
+    // Then check for existing session
+    const checkSession = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log('Initial session check:', currentSession ? 'Session exists' : 'No session');
+        setSession(currentSession);
+        setCurrentUser(formatUser(currentSession));
+      } catch (error) {
+        console.error('Error checking session:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkSession();
 
     return () => {
       subscription.unsubscribe();
@@ -81,14 +86,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithEmail = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password
       });
       
       if (error) throw error;
-      toast.success('Signed in successfully');
+      
+      // Check if session was created successfully
+      if (data?.session) {
+        console.log('Sign in successful, session created');
+        toast.success('Signed in successfully');
+      } else {
+        console.error('Sign in succeeded but no session was created');
+        toast.error('Sign in succeeded but no session was created');
+      }
     } catch (error: any) {
+      console.error('Sign in error:', error);
       handleSupabaseError(error);
     } finally {
       setLoading(false);
@@ -117,8 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await supabase.auth.signOut();
       toast.success('Signed out successfully');
     } catch (error: any) {
       handleSupabaseError(error);

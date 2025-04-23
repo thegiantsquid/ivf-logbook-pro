@@ -23,9 +23,13 @@ export const useSubscription = () => {
   });
 
   useEffect(() => {
+    let isMounted = true;
+    
     const checkSubscriptionStatus = async () => {
       if (!currentUser) {
-        setStatus(prev => ({ ...prev, isLoading: false }));
+        if (isMounted) {
+          setStatus(prev => ({ ...prev, isLoading: false }));
+        }
         return;
       }
 
@@ -40,20 +44,14 @@ export const useSubscription = () => {
         
         if (!sessionData.session) {
           console.log("No active session found");
-          setStatus(prev => ({ ...prev, isLoading: false, error: "No active session" }));
+          if (isMounted) {
+            setStatus(prev => ({ ...prev, isLoading: false, error: "No active session" }));
+          }
           return;
         }
         
-        // Get a fresh access token
-        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-        
-        if (refreshError) {
-          console.error("Error refreshing session:", refreshError);
-          // Continue with existing session
-        }
-        
         // Use the most recent session available
-        const session = refreshData?.session || sessionData.session;
+        const session = sessionData.session;
         
         console.log("Calling subscription-details function with token:", session.access_token.substring(0, 10) + "...");
         
@@ -68,7 +66,7 @@ export const useSubscription = () => {
         
         if (error) {
           console.error('Error calling subscription-details function:', error);
-          throw error;
+          // Continue to fallback instead of throwing
         }
 
         if (data && data.error) {
@@ -79,13 +77,15 @@ export const useSubscription = () => {
         if (data && data.subscription) {
           console.log("Subscription details received:", data.subscription);
           // Process subscription data from the function
-          setStatus({
-            isLoading: false,
-            hasActiveSubscription: data.subscription.status === 'active',
-            isInTrialPeriod: false, // Stripe doesn't directly expose trial status in this response
-            trialEndsAt: null,
-            error: null
-          });
+          if (isMounted) {
+            setStatus({
+              isLoading: false,
+              hasActiveSubscription: data.subscription.status === 'active',
+              isInTrialPeriod: false, // Stripe doesn't directly expose trial status in this response
+              trialEndsAt: null,
+              error: null
+            });
+          }
           return;
         }
 
@@ -94,7 +94,7 @@ export const useSubscription = () => {
         const { data: subscription, error: dbError } = await supabase
           .from('user_subscriptions')
           .select('*')
-          .eq('user_id', currentUser.uid)
+          .eq('user_id', currentUser.id)
           .maybeSingle();
 
         if (dbError) {
@@ -104,13 +104,15 @@ export const useSubscription = () => {
 
         if (!subscription) {
           console.log('No subscription found in database');
-          setStatus({
-            isLoading: false,
-            hasActiveSubscription: false,
-            isInTrialPeriod: false,
-            trialEndsAt: null,
-            error: null
-          });
+          if (isMounted) {
+            setStatus({
+              isLoading: false,
+              hasActiveSubscription: false,
+              isInTrialPeriod: false,
+              trialEndsAt: null,
+              error: null
+            });
+          }
           return;
         }
 
@@ -129,25 +131,35 @@ export const useSubscription = () => {
           subscription_status: subscription.subscription_status
         });
 
-        setStatus({
-          isLoading: false,
-          hasActiveSubscription,
-          isInTrialPeriod: isInTrial,
-          trialEndsAt: trialEndDate,
-          error: null
-        });
+        if (isMounted) {
+          setStatus({
+            isLoading: false,
+            hasActiveSubscription,
+            isInTrialPeriod: isInTrial,
+            trialEndsAt: trialEndDate,
+            error: null
+          });
+        }
       } catch (error) {
         console.error('Error checking subscription:', error);
-        toast.error('Failed to check subscription status');
-        setStatus(prev => ({ 
-          ...prev, 
-          isLoading: false, 
-          error: error instanceof Error ? error.message : 'Unknown error' 
-        }));
+        // Don't show toast error for subscription check as it's not critical
+        // toast.error('Failed to check subscription status');
+        if (isMounted) {
+          setStatus(prev => ({ 
+            ...prev, 
+            isLoading: false, 
+            error: error instanceof Error ? error.message : 'Unknown error' 
+          }));
+        }
       }
     };
 
     checkSubscriptionStatus();
+
+    // Cleanup function to prevent state update on unmounted component
+    return () => {
+      isMounted = false;
+    };
   }, [currentUser]);
 
   return status;

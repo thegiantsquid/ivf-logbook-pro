@@ -6,8 +6,15 @@ import { toast } from '@/lib/toast';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://bmyrltwtvpfrbdiwoqem.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJteXJsdHd0dnBmcmJkaXdvcWVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE1NjQwMDQsImV4cCI6MjA1NzE0MDAwNH0.FHWGZ-w2sa6hP0EHZYwuCF5e8st0LrQxbWqMNTJ5qg8';
 
-// Initialize Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Initialize Supabase client with explicit auth configuration
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: localStorage, // Use localStorage for session storage
+    persistSession: true,  // Persist session across browser sessions
+    autoRefreshToken: true, // Auto-refresh token before it expires
+    detectSessionInUrl: true // Allow detecting session info in URL
+  }
+});
 
 // Handle Supabase errors
 export const handleSupabaseError = (error: any) => {
