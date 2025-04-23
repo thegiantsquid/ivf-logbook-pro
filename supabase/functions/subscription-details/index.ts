@@ -78,206 +78,229 @@ serve(async (req) => {
       apiVersion: "2023-10-16",
     });
 
-    // Get the customer ID from the database
-    const { data: subscription, error: subscriptionError } = await supabaseAdmin
+    // First check the database for subscription details
+    log("Checking subscription in database");
+    const { data: dbSubscription, error: dbError } = await supabaseAdmin
       .from("user_subscriptions")
-      .select("stripe_customer_id, stripe_subscription_id")
+      .select("*")
       .eq("user_id", userId)
-      .single();
+      .maybeSingle();
 
-    if (subscriptionError) {
-      log("Error fetching subscription", subscriptionError.message);
-      
-      // Check if it's because no subscription exists
-      if (subscriptionError.code === 'PGRST116') {
-        return new Response(
-          JSON.stringify({ 
-            error: "No subscription record found",
-            subscription: null
-          }),
-          {
-            status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-      
-      return new Response(
-        JSON.stringify({ 
-          error: "Error fetching subscription",
-          details: subscriptionError.message,
-          subscription: null
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+    if (dbError && dbError.code !== "PGRST116") {
+      log("Error querying database", dbError);
     }
-    
-    if (!subscription?.stripe_subscription_id) {
-      log("No Stripe subscription ID found for user", userId);
-      
-      // Check if we have a customer ID but no subscription
-      if (subscription?.stripe_customer_id) {
-        log("Customer ID found but no subscription", subscription.stripe_customer_id);
-        
-        // Try to find active subscriptions for this customer
-        try {
-          const subscriptions = await stripe.subscriptions.list({
-            customer: subscription.stripe_customer_id,
-            status: 'active',
-            limit: 1,
-          });
+
+    // If we have a subscription in the database with a stripe_customer_id, verify with Stripe
+    if (dbSubscription?.stripe_customer_id) {
+      log("Found subscription in database", { 
+        customerId: dbSubscription.stripe_customer_id,
+        subscriptionId: dbSubscription.stripe_subscription_id
+      });
+
+      try {
+        // If we have a subscription ID, check its status directly
+        if (dbSubscription.stripe_subscription_id) {
+          log("Checking subscription status in Stripe");
+          const stripeSubscription = await stripe.subscriptions.retrieve(
+            dbSubscription.stripe_subscription_id
+          );
           
-          if (subscriptions.data.length > 0) {
-            // Found an active subscription, update our database
-            const stripeSubscription = subscriptions.data[0];
-            log("Found active subscription in Stripe", stripeSubscription.id);
-            
-            // Update the user_subscriptions table
-            await supabaseAdmin
-              .from("user_subscriptions")
-              .update({
-                stripe_subscription_id: stripeSubscription.id,
-                is_subscribed: true,
-                subscription_status: 'active',
-                current_period_start: new Date(stripeSubscription.current_period_start * 1000).toISOString(),
-                current_period_end: new Date(stripeSubscription.current_period_end * 1000).toISOString(),
-                updated_at: new Date().toISOString()
-              })
-              .eq("user_id", userId);
-            
-            // Format response data
-            const subscriptionData = {
+          log("Retrieved subscription from Stripe", { 
+            status: stripeSubscription.status,
+            id: stripeSubscription.id 
+          });
+
+          const isActive = stripeSubscription.status === 'active';
+          
+          // Update the database with the latest details from Stripe
+          const updateData = {
+            is_subscribed: isActive,
+            subscription_status: stripeSubscription.status,
+            current_period_start: new Date(stripeSubscription.current_period_start * 1000).toISOString(),
+            current_period_end: new Date(stripeSubscription.current_period_end * 1000).toISOString(),
+            cancel_at_period_end: stripeSubscription.cancel_at_period_end,
+            updated_at: new Date().toISOString()
+          };
+          
+          log("Updating subscription in database", updateData);
+          const { error: updateError } = await supabaseAdmin
+            .from("user_subscriptions")
+            .update(updateData)
+            .eq("user_id", userId);
+          
+          if (updateError) {
+            log("Error updating subscription", updateError);
+          }
+          
+          return new Response(JSON.stringify({
+            subscription: {
               id: stripeSubscription.id,
               status: stripeSubscription.status,
               current_period_start: new Date(stripeSubscription.current_period_start * 1000).toISOString(),
               current_period_end: new Date(stripeSubscription.current_period_end * 1000).toISOString(),
               cancel_at_period_end: stripeSubscription.cancel_at_period_end,
-              cancel_at: stripeSubscription.cancel_at 
-                ? new Date(stripeSubscription.cancel_at * 1000).toISOString() 
-                : null,
-              canceled_at: stripeSubscription.canceled_at 
-                ? new Date(stripeSubscription.canceled_at * 1000).toISOString() 
-                : null,
-            };
-            
-            return new Response(JSON.stringify({ subscription: subscriptionData }), {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-              status: 200,
-            });
-          }
-        } catch (error) {
-          log("Error checking Stripe for subscriptions", error.message);
+              is_active: isActive
+            }
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
         }
-      }
-      
-      return new Response(
-        JSON.stringify({ 
-          error: "No subscription found",
-          subscription: null
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    log("Found subscription with ID", subscription.stripe_subscription_id);
-
-    // Get the subscription details from Stripe
-    let stripeSubscription;
-    try {
-      stripeSubscription = await stripe.subscriptions.retrieve(
-        subscription.stripe_subscription_id
-      );
-      log("Retrieved Stripe subscription", stripeSubscription.id);
-      
-      // Explicitly log the status to help debug
-      log("Subscription status from Stripe", stripeSubscription.status);
-    } catch (error) {
-      log("Error retrieving subscription from Stripe", error.message);
-      
-      // If the subscription doesn't exist in Stripe anymore, update our DB
-      if (error.code === 'resource_missing') {
-        log("Subscription no longer exists in Stripe, marking as cancelled in database");
-        await supabaseAdmin
-          .from("user_subscriptions")
-          .update({
-            is_subscribed: false,
-            subscription_status: 'cancelled',
+        
+        // If no subscription ID but we have a customer ID, check for active subscriptions
+        log("No subscription ID, checking for active subscriptions by customer ID");
+        const subscriptions = await stripe.subscriptions.list({
+          customer: dbSubscription.stripe_customer_id,
+          status: 'active',
+          limit: 1
+        });
+        
+        if (subscriptions.data.length > 0) {
+          const activeSubscription = subscriptions.data[0];
+          log("Found active subscription", { id: activeSubscription.id });
+          
+          // Update database with found subscription
+          const updateData = {
+            is_subscribed: true,
+            stripe_subscription_id: activeSubscription.id,
+            subscription_status: activeSubscription.status,
+            current_period_start: new Date(activeSubscription.current_period_start * 1000).toISOString(),
+            current_period_end: new Date(activeSubscription.current_period_end * 1000).toISOString(),
             updated_at: new Date().toISOString()
-          })
-          .eq("user_id", userId);
+          };
+          
+          log("Updating subscription in database", updateData);
+          const { error: updateError } = await supabaseAdmin
+            .from("user_subscriptions")
+            .update(updateData)
+            .eq("user_id", userId);
+          
+          if (updateError) {
+            log("Error updating subscription", updateError);
+          }
+          
+          return new Response(JSON.stringify({
+            subscription: {
+              id: activeSubscription.id,
+              status: activeSubscription.status,
+              current_period_start: new Date(activeSubscription.current_period_start * 1000).toISOString(),
+              current_period_end: new Date(activeSubscription.current_period_end * 1000).toISOString(),
+              cancel_at_period_end: activeSubscription.cancel_at_period_end,
+              is_active: true
+            }
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      } catch (error) {
+        log("Error checking with Stripe", error.message);
+        // Continue to fallback if Stripe check fails
       }
-      
-      // Return more detailed error
-      return new Response(
-        JSON.stringify({ 
-          error: "Error retrieving subscription",
-          details: error.message,
-          code: error.code || 'unknown',
-          subscription: null
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
     }
-
-    // Format response data
-    const subscriptionData = {
-      id: stripeSubscription.id,
-      status: stripeSubscription.status,
-      current_period_start: new Date(stripeSubscription.current_period_start * 1000).toISOString(),
-      current_period_end: new Date(stripeSubscription.current_period_end * 1000).toISOString(),
-      cancel_at_period_end: stripeSubscription.cancel_at_period_end,
-      cancel_at: stripeSubscription.cancel_at 
-        ? new Date(stripeSubscription.cancel_at * 1000).toISOString() 
-        : null,
-      canceled_at: stripeSubscription.canceled_at 
-        ? new Date(stripeSubscription.canceled_at * 1000).toISOString() 
-        : null,
-    };
-
-    // Update the user_subscriptions table with the latest details
-    const { error: updateError } = await supabaseAdmin
-      .from("user_subscriptions")
-      .update({
-        is_subscribed: stripeSubscription.status === "active",
-        subscription_status: subscriptionData.status,
-        current_period_start: subscriptionData.current_period_start,
-        current_period_end: subscriptionData.current_period_end,
-        cancel_at_period_end: subscriptionData.cancel_at_period_end,
-        cancel_at: subscriptionData.cancel_at,
-        canceled_at: subscriptionData.canceled_at,
-        updated_at: new Date().toISOString()
-      })
-      .eq("user_id", userId);
-
-    if (updateError) {
-      log("Error updating subscription in database", updateError.message);
-      return new Response(
-        JSON.stringify({ 
-          error: "Error updating subscription",
-          details: updateError.message,
-          subscription: subscriptionData 
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        }
-      );
-    }
-
-    log("Successfully updated subscription in database");
     
-    return new Response(JSON.stringify({ subscription: subscriptionData }), {
+    // If no subscription found in the database, check Stripe by user email
+    log("Checking Stripe by email");
+    try {
+      const customers = await stripe.customers.list({
+        email: user.email,
+        limit: 1
+      });
+      
+      if (customers.data.length > 0) {
+        const customer = customers.data[0];
+        log("Found customer in Stripe", { id: customer.id });
+        
+        const subscriptions = await stripe.subscriptions.list({
+          customer: customer.id,
+          status: 'active',
+          limit: 1
+        });
+        
+        if (subscriptions.data.length > 0) {
+          const subscription = subscriptions.data[0];
+          log("Found active subscription in Stripe", { id: subscription.id });
+          
+          // Create or update the subscription in the database
+          const subscriptionData = {
+            user_id: userId,
+            is_subscribed: true,
+            stripe_customer_id: customer.id,
+            stripe_subscription_id: subscription.id,
+            subscription_status: subscription.status,
+            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          
+          log("Creating/updating subscription in database", subscriptionData);
+          
+          // Use upsert to handle both cases (update or insert)
+          const { error: upsertError } = await supabaseAdmin
+            .from("user_subscriptions")
+            .upsert(subscriptionData)
+            .eq("user_id", userId);
+          
+          if (upsertError) {
+            log("Error upserting subscription", upsertError);
+          }
+          
+          return new Response(JSON.stringify({
+            subscription: {
+              id: subscription.id,
+              status: subscription.status,
+              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              cancel_at_period_end: subscription.cancel_at_period_end,
+              is_active: true
+            }
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+    } catch (stripeError) {
+      log("Error checking Stripe", stripeError.message);
+    }
+    
+    // If we reach here, no active subscription was found
+    log("No active subscription found");
+    
+    // Update the database to reflect no subscription if we had one before
+    if (dbSubscription) {
+      log("Updating database to reflect no subscription");
+      const { error: updateError } = await supabaseAdmin
+        .from("user_subscriptions")
+        .update({
+          is_subscribed: false,
+          subscription_status: 'inactive',
+          updated_at: new Date().toISOString()
+        })
+        .eq("user_id", userId);
+      
+      if (updateError) {
+        log("Error updating subscription status", updateError);
+      }
+    } else {
+      // Create a record showing no subscription
+      log("Creating subscription record with inactive status");
+      const { error: insertError } = await supabaseAdmin
+        .from("user_subscriptions")
+        .insert({
+          user_id: userId,
+          is_subscribed: false,
+          subscription_status: 'inactive',
+          updated_at: new Date().toISOString()
+        });
+      
+      if (insertError) {
+        log("Error inserting subscription record", insertError);
+      }
+    }
+    
+    return new Response(JSON.stringify({ 
+      subscription: null,
+      message: "No active subscription found" 
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
     });
   } catch (error) {
     log("Unhandled error", error.message);

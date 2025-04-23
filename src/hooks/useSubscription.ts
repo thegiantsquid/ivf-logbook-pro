@@ -29,6 +29,9 @@ export const useSubscription = () => {
     }
 
     try {
+      console.log("Checking subscription status for user:", currentUser.email);
+      setStatus(prev => ({ ...prev, isLoading: true }));
+      
       // First, get the current session
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
@@ -46,7 +49,7 @@ export const useSubscription = () => {
       // Use the most recent session available
       const session = sessionData.session;
       
-      console.log("Calling subscription-details function with token:", session.access_token.substring(0, 10) + "...");
+      console.log("Calling subscription-details function");
       
       // Call our edge function to check subscription with fresh token
       const { data, error } = await supabase.functions.invoke('subscription-details', {
@@ -59,12 +62,12 @@ export const useSubscription = () => {
       
       if (error) {
         console.error('Error calling subscription-details function:', error);
-        // Continue to fallback instead of throwing
+        throw error;
       }
 
       if (data && data.error) {
         console.log("Function returned error:", data.error);
-        // No need to throw here, we'll handle the DB fallback
+        throw new Error(data.error);
       }
 
       if (data && data.subscription) {
@@ -72,8 +75,8 @@ export const useSubscription = () => {
         // Process subscription data from the function
         setStatus({
           isLoading: false,
-          hasActiveSubscription: data.subscription.status === 'active',
-          isInTrialPeriod: false, // Stripe doesn't directly expose trial status in this response
+          hasActiveSubscription: data.subscription.status === 'active' || data.subscription.is_active === true,
+          isInTrialPeriod: false,
           trialEndsAt: null,
           error: null
         });
@@ -83,9 +86,9 @@ export const useSubscription = () => {
       console.log("No subscription details, falling back to database check");
       // Fallback to database check
       const { data: subscription, error: dbError } = await supabase
-        .from('user_subscriptions')
-        .select('*')
-        .eq('user_id', currentUser.id)
+        .from("user_subscriptions")
+        .select("*")
+        .eq("user_id", currentUser.id)
         .maybeSingle();
 
       if (dbError) {
@@ -144,10 +147,21 @@ export const useSubscription = () => {
     checkSubscriptionStatus();
   }, [checkSubscriptionStatus]);
 
+  // Auto-refresh when on subscription management pages
+  useEffect(() => {
+    if (window.location.pathname.includes('subscribe') || 
+        window.location.pathname.includes('subscription')) {
+      const interval = setInterval(() => {
+        checkSubscriptionStatus();
+      }, 5000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [checkSubscriptionStatus]);
+
   // Function to manually refresh the subscription status
   const refreshSubscription = useCallback(async () => {
     console.log("Manually refreshing subscription status");
-    setStatus(prev => ({ ...prev, isLoading: true }));
     await checkSubscriptionStatus();
   }, [checkSubscriptionStatus]);
 

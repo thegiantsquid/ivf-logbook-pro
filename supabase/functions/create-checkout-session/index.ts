@@ -1,121 +1,147 @@
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from 'https://esm.sh/stripe@14.21.0';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import Stripe from "https://esm.sh/stripe@12.18.0?dts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+// Helper function for logging
+const log = (message: string, details?: any) => {
+  console.log(`[CREATE-CHECKOUT] ${message}${details ? ': ' + JSON.stringify(details) : ''}`);
 };
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-  );
-
   try {
-    console.log('Starting checkout session creation...');
+    log("Function started");
     
-    // Get the user data from the auth header
-    const authHeader = req.headers.get('Authorization')!;
-    const token = authHeader.replace('Bearer ', '');
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
-    const email = user?.email;
-
-    if (!email) {
-      throw new Error('No email found');
-    }
-    
-    console.log(`Creating checkout for user: ${email}`);
-
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-      apiVersion: '2023-10-16',
-    });
-
-    // Specific product ID provided by user
-    const PRODUCT_ID = 'prod_S3BoOl5xVZ5E37';
-
-    // Get the price associated with this product
-    const prices = await stripe.prices.list({
-      product: PRODUCT_ID,
-      active: true,
-      limit: 1
-    });
-
-    if (prices.data.length === 0) {
-      throw new Error('No active price found for the product');
+    // Get the authorization header from the request
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      log("No authorization header");
+      return new Response(
+        JSON.stringify({ error: "No authorization header" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    const price_id = prices.data[0].id;
-    console.log(`Using price ID: ${price_id}`);
+    // Initialize a Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
 
-    // Check if customer already exists
-    const customers = await stripe.customers.list({
-      email: email,
-      limit: 1
+    // Extract the JWT token and get user information
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    
+    if (userError || !userData.user) {
+      log(`Auth error: ${userError?.message || "No user found"}`);
+      return new Response(
+        JSON.stringify({ error: userError?.message || "Authentication failed" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const user = userData.user;
+    log(`User authenticated: ${user.id}, ${user.email}`);
+
+    // Initialize Stripe
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeSecretKey) {
+      log("STRIPE_SECRET_KEY not found");
+      return new Response(
+        JSON.stringify({ error: "Stripe key not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const stripe = new Stripe(stripeSecretKey, {
+      apiVersion: "2023-10-16",
     });
 
-    let customer_id = undefined;
-    if (customers.data.length > 0) {
-      customer_id = customers.data[0].id;
-      console.log(`Found existing customer: ${customer_id}`);
-      
-      // Check if already subscribed to this price - but don't throw error
-      // Just log it and continue with checkout creation
-      const subscriptions = await stripe.subscriptions.list({
-        customer: customers.data[0].id,
-        status: 'active',
-        price: price_id,
-        limit: 1
+    // Check if user already has a Stripe customer ID
+    log("Checking for existing Stripe customer");
+    const { data: subscription } = await supabaseClient
+      .from("user_subscriptions")
+      .select("stripe_customer_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    let customerId = subscription?.stripe_customer_id;
+
+    // If no customer ID found, check by email or create a new customer
+    if (!customerId) {
+      log("No customer ID in database, checking Stripe by email");
+      const customers = await stripe.customers.list({
+        email: user.email,
+        limit: 1,
       });
 
-      if (subscriptions.data.length > 0) {
-        console.log(`Customer already has an active subscription to this plan. Creating new checkout anyway.`);
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+        log(`Found existing Stripe customer by email: ${customerId}`);
+      } else {
+        log("Creating new Stripe customer");
+        const newCustomer = await stripe.customers.create({
+          email: user.email,
+          metadata: {
+            user_id: user.id,
+          },
+        });
+        customerId = newCustomer.id;
+        log(`Created new Stripe customer: ${customerId}`);
       }
-    } else {
-      console.log('No existing customer found, will create new customer');
     }
 
-    console.log('Creating payment session...');
+    // Create a new checkout session
+    log("Creating Stripe checkout session");
+    const origin = req.headers.get("origin") || "http://localhost:5173";
     const session = await stripe.checkout.sessions.create({
-      customer: customer_id,
-      customer_email: customer_id ? undefined : email,
+      customer: customerId,
+      payment_method_types: ["card"],
       line_items: [
         {
-          price: price_id,
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "Professional Plan",
+              description: "Advanced features for medical professionals",
+            },
+            unit_amount: 1900, // $19.00
+            recurring: {
+              interval: "month",
+            },
+          },
           quantity: 1,
         },
       ],
-      mode: 'subscription',
-      success_url: `${req.headers.get('origin')}/dashboard?subscription=success`,
-      cancel_url: `${req.headers.get('origin')}/subscribe?subscription=canceled`,
+      mode: "subscription",
+      success_url: `${origin}/dashboard?subscription=success`,
+      cancel_url: `${origin}/subscribe?subscription=canceled`,
       allow_promotion_codes: true,
-      billing_address_collection: 'auto',
     });
 
-    console.log('Payment session created:', session.id);
+    log(`Checkout session created: ${session.id}, URL: ${session.url}`);
+
+    // Return the checkout session URL
     return new Response(
       JSON.stringify({ url: session.url }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error('Error creating payment session:', error);
+    log(`Error: ${error.message}`);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

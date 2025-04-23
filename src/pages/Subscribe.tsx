@@ -9,8 +9,9 @@ import { toast } from '@/lib/toast';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const Subscribe = () => {
-  const { hasActiveSubscription, isInTrialPeriod, trialEndsAt, refreshSubscription } = useSubscription();
+  const { hasActiveSubscription, isInTrialPeriod, trialEndsAt, refreshSubscription, isLoading: subscriptionLoading } = useSubscription();
   const [isLoading, setIsLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
@@ -27,6 +28,15 @@ const Subscribe = () => {
     }
   }, [searchParams, refreshSubscription]);
   
+  useEffect(() => {
+    // Periodically refresh subscription status when on this page
+    const interval = setInterval(() => {
+      refreshSubscription();
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [refreshSubscription]);
+  
   const features = [
     { icon: FileEdit, text: "Add unlimited IVF procedure records" },
     { icon: FileSearch, text: "Advanced search and filtering" },
@@ -37,6 +47,7 @@ const Subscribe = () => {
 
   const handleSubscribe = async () => {
     setIsLoading(true);
+    setCheckoutError(null);
     
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -57,13 +68,17 @@ const Subscribe = () => {
       
       if (error) {
         console.error('Error from edge function:', error);
+        setCheckoutError(error.message || 'Failed to create checkout session');
         throw new Error(error.message || 'Failed to create checkout session');
       }
       
       if (!data || !data.url) {
-        throw new Error('No checkout URL returned from server');
+        const errorMsg = 'No checkout URL returned from server';
+        setCheckoutError(errorMsg);
+        throw new Error(errorMsg);
       }
       
+      console.log('Redirecting to Stripe checkout:', data.url);
       // Redirect to Stripe checkout
       window.location.href = data.url;
       
@@ -77,6 +92,14 @@ const Subscribe = () => {
 
   return (
     <div className="container max-w-4xl mx-auto py-8">
+      {checkoutError && (
+        <div className="bg-destructive/10 text-destructive p-4 rounded-md mb-4">
+          <h3 className="font-medium">Error creating checkout session:</h3>
+          <p>{checkoutError}</p>
+          <p className="text-sm mt-2">Please try again or contact support if the problem persists.</p>
+        </div>
+      )}
+      
       <Card className="w-full border border-primary/10 bg-card shadow-sm hover:shadow-md transition-all">
         <CardHeader className="border-b border-border/60 pb-6">
           <CardTitle className="text-2xl text-card-foreground">Professional Plan</CardTitle>
@@ -102,19 +125,24 @@ const Subscribe = () => {
             onClick={handleSubscribe} 
             className="w-full" 
             size="lg"
-            disabled={isLoading || hasActiveSubscription}
+            disabled={isLoading || hasActiveSubscription || subscriptionLoading}
           >
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Processing...
               </>
+            ) : subscriptionLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Checking subscription...
+              </>
             ) : hasActiveSubscription ? (
               'Already Subscribed'
             ) : isInTrialPeriod ? (
               'Subscribe Now'
             ) : (
-              'Reactivate Subscription'
+              'Subscribe Now'
             )}
           </Button>
         </CardFooter>

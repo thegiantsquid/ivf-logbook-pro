@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import Stripe from "https://esm.sh/stripe@12.18.0?dts";
@@ -8,6 +7,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Helper function for logging
+const log = (message: string, details?: any) => {
+  console.log(`[WEBHOOK] ${message}${details ? ': ' + JSON.stringify(details) : ''}`);
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -15,12 +19,12 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Webhook received. Processing...");
+    log("Webhook received. Processing...");
     
     // Get the stripe signature from the request headers
     const signature = req.headers.get("stripe-signature");
     if (!signature) {
-      console.error("No stripe signature found");
+      log("No stripe signature found");
       return new Response(
         JSON.stringify({ error: "No stripe signature found" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -38,11 +42,12 @@ serve(async (req) => {
     let event;
     try {
       const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET") || "";
+      log("Verifying webhook signature");
       // Use the async version of constructEvent
       event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
-      console.log(`Event verified: ${event.type}`);
+      log(`Event verified: ${event.type}`);
     } catch (err) {
-      console.error(`⚠️ Webhook signature verification failed: ${err.message}`);
+      log(`Webhook signature verification failed: ${err.message}`);
       return new Response(
         JSON.stringify({ error: `Webhook signature verification failed: ${err.message}` }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -56,61 +61,105 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    console.log(`Processing event: ${event.type}`);
+    log(`Processing event: ${event.type}`);
 
     // Handle different event types
     switch (event.type) {
       case "checkout.session.completed":
         const checkoutSession = event.data.object;
-        console.log(`Checkout completed: ${checkoutSession.id}`);
+        log(`Checkout completed: ${checkoutSession.id}`);
         
         if (checkoutSession.customer && checkoutSession.subscription) {
           // Get customer details to find the user
           const customer = await stripe.customers.retrieve(checkoutSession.customer.toString());
           
           if (!customer.deleted && customer.email) {
-            console.log(`Looking for user with email: ${customer.email}`);
+            log(`Looking for user with email: ${customer.email}`);
             
             // Find the user by email
-            const { data: users, error: userError } = await supabaseAdmin
-              .from("auth.users")
-              .select("id")
-              .eq("email", customer.email)
-              .limit(1);
-
+            const { data: users, error: userError } = await supabaseAdmin.auth.admin.listUsers();
+            
             if (userError) {
-              console.error("Error finding user:", userError);
-              
-              // Try alternative way to find the user
-              const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers();
-              if (authError) {
-                console.error("Error listing users:", authError);
-                break;
-              }
-              
-              const matchingUser = authUsers.users.find(u => u.email === customer.email);
-              if (!matchingUser) {
-                console.error("User not found with email:", customer.email);
-                break;
-              }
-              
-              const userId = matchingUser.id;
-              console.log(`User found through auth admin API: ${userId}`);
-              
-              // Update user subscription with more detailed logging
-              console.log(`Updating subscription for user ${userId}`);
-              await updateSubscription(supabaseAdmin, userId, checkoutSession, stripe);
-            } else if (users && users.length > 0) {
-              const userId = users[0].id;
-              console.log(`User found with ID: ${userId}`);
-              
-              // Update user subscription with more detailed logging
-              console.log(`Updating subscription for user ${userId}`);
-              await updateSubscription(supabaseAdmin, userId, checkoutSession, stripe);
-            } else {
-              console.error("User not found with email:", customer.email);
+              log(`Error listing users: ${userError.message}`);
+              throw userError;
             }
+            
+            const matchingUser = users.users.find(u => u.email === customer.email);
+            if (!matchingUser) {
+              log(`User not found with email: ${customer.email}`);
+              throw new Error(`No user found with email: ${customer.email}`);
+            }
+            
+            const userId = matchingUser.id;
+            log(`User found: ${userId}`);
+            
+            // Get subscription details from Stripe
+            log(`Retrieving subscription: ${checkoutSession.subscription}`);
+            const subscription = await stripe.subscriptions.retrieve(checkoutSession.subscription.toString());
+            log(`Subscription status: ${subscription.status}`);
+            
+            // Update or create user subscription record
+            const subscriptionData = {
+              user_id: userId,
+              is_subscribed: subscription.status === 'active',
+              stripe_customer_id: checkoutSession.customer.toString(),
+              stripe_subscription_id: checkoutSession.subscription.toString(),
+              subscription_status: subscription.status,
+              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              updated_at: new Date().toISOString()
+            };
+            
+            log(`Updating subscription for user ${userId}`);
+            log(`Subscription data: ${JSON.stringify(subscriptionData)}`);
+            
+            // Check if user subscription record exists
+            const { data: existingSub, error: checkError } = await supabaseAdmin
+              .from("user_subscriptions")
+              .select("id")
+              .eq("user_id", userId)
+              .single();
+              
+            if (checkError && checkError.code !== "PGRST116") { // Not found error code
+              log(`Error checking existing subscription: ${checkError.message}`);
+            }
+            
+            if (existingSub) {
+              // Update existing subscription
+              log(`Updating existing subscription for user ${userId}`);
+              const { error: updateError } = await supabaseAdmin
+                .from("user_subscriptions")
+                .update(subscriptionData)
+                .eq("user_id", userId);
+      
+              if (updateError) {
+                log(`Error updating subscription: ${updateError.message}`);
+                throw updateError;
+              } else {
+                log(`Subscription updated for user ${userId}`);
+              }
+            } else {
+              // Insert new subscription record
+              log(`Creating new subscription for user ${userId}`);
+              const { error: insertError } = await supabaseAdmin
+                .from("user_subscriptions")
+                .insert(subscriptionData);
+      
+              if (insertError) {
+                log(`Error creating subscription: ${insertError.message}`);
+                throw insertError;
+              } else {
+                log(`New subscription created for user ${userId}`);
+              }
+            }
+          } else {
+            log(`Invalid customer or missing email: ${customer}`);
           }
+        } else {
+          log(`Missing customer or subscription in checkout session: ${JSON.stringify({
+            customer: checkoutSession.customer,
+            subscription: checkoutSession.subscription
+          })}`);
         }
         break;
 
@@ -127,7 +176,7 @@ serve(async (req) => {
         break;
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        log(`Unhandled event type: ${event.type}`);
     }
 
     return new Response(JSON.stringify({ received: true }), {
@@ -135,7 +184,7 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error(`Webhook error: ${error.message}`);
+    log(`Webhook error: ${error.message}`);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
