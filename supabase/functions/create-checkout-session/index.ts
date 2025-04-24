@@ -111,12 +111,12 @@ serve(async (req) => {
       line_items: [
         {
           price_data: {
-            currency: "usd",
+            currency: "gbp", // Changed from USD to GBP
             product_data: {
               name: "Professional Plan",
               description: "Advanced features for medical professionals",
             },
-            unit_amount: 1900, // $19.00
+            unit_amount: 1900, // £19.00
             recurring: {
               interval: "month",
             },
