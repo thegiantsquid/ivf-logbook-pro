@@ -163,6 +163,7 @@ export type Database = {
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           subscription_end_date: string | null
+          subscription_status: string | null
           trial_end_date: string
           trial_start_date: string
           updated_at: string
@@ -175,6 +176,7 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_end_date?: string | null
+          subscription_status?: string | null
           trial_end_date: string
           trial_start_date?: string
           updated_at?: string
@@ -187,6 +189,7 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_end_date?: string | null
+          subscription_status?: string | null
           trial_end_date?: string
           trial_start_date?: string
           updated_at?: string

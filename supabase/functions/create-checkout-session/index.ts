@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import Stripe from "https://esm.sh/stripe@12.18.0?dts";
@@ -32,8 +31,8 @@ serve(async (req) => {
       );
     }
 
-    // Initialize a Supabase client
-    const supabaseClient = createClient(
+    // Initialize Supabase client with service role key for admin access
+    const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
@@ -41,7 +40,7 @@ serve(async (req) => {
 
     // Extract the JWT token and get user information
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
     
     if (userError || !userData.user) {
       log(`Auth error: ${userError?.message || "No user found"}`);
@@ -68,24 +67,24 @@ serve(async (req) => {
       apiVersion: "2023-10-16",
     });
 
-    // Check if user already has a Stripe customer ID
-    log("Checking for existing Stripe customer");
-    const { data: subscription, error: fetchError } = await supabaseClient
+    // Check for existing customer or create new one
+    let customerId: string;
+    
+    // First check our database
+    const { data: subscription, error: fetchError } = await supabaseAdmin
       .from("user_subscriptions")
       .select("stripe_customer_id")
       .eq("user_id", user.id)
       .maybeSingle();
-    
+
     if (fetchError) {
       log(`Error fetching subscription: ${fetchError.message}`);
-      // Continue anyway, we'll create or find a customer
     }
 
-    let customerId = subscription?.stripe_customer_id;
+    customerId = subscription?.stripe_customer_id || '';
 
-    // If no customer ID found, check by email or create a new customer
     if (!customerId) {
-      log("No customer ID in database, checking Stripe by email");
+      // Check Stripe for existing customer
       const customers = await stripe.customers.list({
         email: user.email,
         limit: 1,
@@ -93,9 +92,9 @@ serve(async (req) => {
 
       if (customers.data.length > 0) {
         customerId = customers.data[0].id;
-        log(`Found existing Stripe customer by email: ${customerId}`);
+        log(`Found existing Stripe customer: ${customerId}`);
       } else {
-        log("Creating new Stripe customer");
+        // Create new customer
         const newCustomer = await stripe.customers.create({
           email: user.email,
           metadata: {
@@ -106,62 +105,28 @@ serve(async (req) => {
         log(`Created new Stripe customer: ${customerId}`);
       }
 
-      // Check if user already has a record in user_subscriptions
-      const { data: existingRecord, error: recordError } = await supabaseClient
+      // Upsert customer info to our database
+      const { error: upsertError } = await supabaseAdmin
         .from("user_subscriptions")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-        
-      if (recordError) {
-        log(`Error checking existing record: ${recordError.message}`);
-      }
+        .upsert({
+          user_id: user.id,
+          stripe_customer_id: customerId,
+          is_subscribed: false,
+          trial_start_date: new Date().toISOString(),
+          trial_end_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days trial
+          subscription_status: 'inactive',
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        });
 
-      // Prepare subscription data
-      const subscriptionData = {
-        user_id: user.id,
-        stripe_customer_id: customerId,
-        updated_at: new Date().toISOString()
-      };
-      
-      log("Saving customer ID to database");
-      
-      if (existingRecord) {
-        // Update existing record
-        const { error: updateError } = await supabaseClient
-          .from("user_subscriptions")
-          .update(subscriptionData)
-          .eq("user_id", user.id);
-          
-        if (updateError) {
-          log(`Error updating record: ${updateError.message}`);
-          log(`Update error details: ${JSON.stringify(updateError)}`);
-        } else {
-          log("Successfully updated customer ID in database");
-        }
-      } else {
-        // Insert new record
-        const { error: insertError } = await supabaseClient
-          .from("user_subscriptions")
-          .insert({
-            ...subscriptionData,
-            is_subscribed: false,
-            trial_start_date: new Date().toISOString(),
-            trial_end_date: null
-          });
-          
-        if (insertError) {
-          log(`Error inserting record: ${insertError.message}`);
-          log(`Insert error details: ${JSON.stringify(insertError)}`);
-          // Continue anyway, this is not critical for checkout
-        } else {
-          log("Successfully inserted new record into database");
-        }
+      if (upsertError) {
+        log(`Error upserting subscription record: ${upsertError.message}`);
+        log(`Upsert error details: ${JSON.stringify(upsertError)}`);
       }
     }
 
-    // Create a new checkout session
-    log("Creating Stripe checkout session");
+    // Create checkout session
     const origin = req.headers.get("origin") || "http://localhost:5173";
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -169,12 +134,12 @@ serve(async (req) => {
       line_items: [
         {
           price_data: {
-            currency: "gbp", // Changed from USD to GBP
+            currency: "gbp",
             product_data: {
               name: "Professional Plan",
               description: "Advanced features for medical professionals",
             },
-            unit_amount: 1900, // £19.00
+            unit_amount: 1900,
             recurring: {
               interval: "month",
             },
@@ -188,9 +153,7 @@ serve(async (req) => {
       allow_promotion_codes: true,
     });
 
-    log(`Checkout session created: ${session.id}, URL: ${session.url}`);
-
-    // Return the checkout session URL
+    log(`Checkout session created: ${session.id}`);
     return new Response(
       JSON.stringify({ url: session.url }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -23,7 +23,8 @@ enabled = true
 verify_jwt = false
 
 [functions.create-checkout-session]
-verify_jwt = false
+verify_jwt = true
 
 [functions.subscription-details]
 verify_jwt = true
+
