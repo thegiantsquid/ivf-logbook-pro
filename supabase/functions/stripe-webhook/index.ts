@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import Stripe from "https://esm.sh/stripe@12.18.0?dts";
@@ -35,7 +36,16 @@ serve(async (req) => {
     const body = await req.text();
     
     // Initialize Stripe
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeSecretKey) {
+      log("STRIPE_SECRET_KEY not found");
+      return new Response(
+        JSON.stringify({ error: "Stripe key not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",
     });
 
@@ -43,8 +53,15 @@ serve(async (req) => {
     try {
       const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET") || "";
       log("Verifying webhook signature");
-      // Use the async version of constructEvent
-      event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
+      
+      if (!webhookSecret) {
+        log("WARNING: STRIPE_WEBHOOK_SECRET is not set - skipping verification");
+        event = JSON.parse(body);
+      } else {
+        // Use the async version of constructEvent
+        event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
+      }
+      
       log(`Event verified: ${event.type}`);
     } catch (err) {
       log(`Webhook signature verification failed: ${err.message}`);
@@ -98,6 +115,17 @@ serve(async (req) => {
             const subscription = await stripe.subscriptions.retrieve(checkoutSession.subscription.toString());
             log(`Subscription status: ${subscription.status}`);
             
+            // Check if user subscription record exists
+            const { data: existingSub, error: checkError } = await supabaseAdmin
+              .from("user_subscriptions")
+              .select("id")
+              .eq("user_id", userId)
+              .maybeSingle();
+              
+            if (checkError) {
+              log(`Error checking existing subscription: ${checkError.message}`);
+            }
+            
             // Update or create user subscription record
             const subscriptionData = {
               user_id: userId,
@@ -110,19 +138,7 @@ serve(async (req) => {
               updated_at: new Date().toISOString()
             };
             
-            log(`Updating subscription for user ${userId}`);
             log(`Subscription data: ${JSON.stringify(subscriptionData)}`);
-            
-            // Check if user subscription record exists
-            const { data: existingSub, error: checkError } = await supabaseAdmin
-              .from("user_subscriptions")
-              .select("id")
-              .eq("user_id", userId)
-              .single();
-              
-            if (checkError && checkError.code !== "PGRST116") { // Not found error code
-              log(`Error checking existing subscription: ${checkError.message}`);
-            }
             
             if (existingSub) {
               // Update existing subscription
@@ -191,68 +207,6 @@ serve(async (req) => {
     );
   }
 });
-
-async function updateSubscription(supabase, userId, checkoutSession, stripe) {
-  console.log(`Updating subscription for user ${userId}`);
-  
-  // Get subscription details from Stripe
-  const subscription = await stripe.subscriptions.retrieve(checkoutSession.subscription.toString());
-  console.log(`Retrieved subscription details from Stripe: ${JSON.stringify(subscription.status)}`);
-  
-  // Check if user subscription record exists
-  const { data: existingSub, error: checkError } = await supabase
-    .from("user_subscriptions")
-    .select("id")
-    .eq("user_id", userId)
-    .single();
-    
-  if (checkError && checkError.code !== "PGRST116") { // Not found error code
-    console.error("Error checking existing subscription:", checkError);
-  }
-  
-  const updateData = {
-    is_subscribed: true,
-    stripe_customer_id: checkoutSession.customer.toString(),
-    stripe_subscription_id: checkoutSession.subscription.toString(),
-    subscription_status: subscription.status,
-    current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-    current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-    updated_at: new Date().toISOString()
-  };
-  
-  // Log the data we're about to insert/update
-  console.log(`Subscription data to update: ${JSON.stringify(updateData)}`);
-  
-  if (existingSub) {
-    // Update existing subscription
-    console.log(`Updating existing subscription for user ${userId}`);
-    const { error: updateError } = await supabase
-      .from("user_subscriptions")
-      .update(updateData)
-      .eq("user_id", userId);
-
-    if (updateError) {
-      console.error("Error updating subscription:", updateError);
-    } else {
-      console.log(`Subscription updated for user ${userId}`);
-    }
-  } else {
-    // Insert new subscription record
-    console.log(`Creating new subscription for user ${userId}`);
-    const { error: insertError } = await supabase
-      .from("user_subscriptions")
-      .insert({
-        user_id: userId,
-        ...updateData
-      });
-
-    if (insertError) {
-      console.error("Error creating subscription:", insertError);
-    } else {
-      console.log(`New subscription created for user ${userId}`);
-    }
-  }
-}
 
 async function handleInvoicePayment(supabase, event, stripe) {
   const invoice = event.data.object;

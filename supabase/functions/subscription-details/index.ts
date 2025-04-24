@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import Stripe from "https://esm.sh/stripe@12.18.0?dts";
@@ -86,9 +87,12 @@ serve(async (req) => {
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (dbError && dbError.code !== "PGRST116") {
+    if (dbError) {
       log("Error querying database", dbError);
+      // Don't return early, continue to check Stripe
     }
+    
+    log("Database subscription data", dbSubscription);
 
     // If we have a subscription in the database with a stripe_customer_id, verify with Stripe
     if (dbSubscription?.stripe_customer_id) {
@@ -130,6 +134,8 @@ serve(async (req) => {
           
           if (updateError) {
             log("Error updating subscription", updateError);
+          } else {
+            log("Successfully updated subscription in database");
           }
           
           return new Response(JSON.stringify({
@@ -176,6 +182,8 @@ serve(async (req) => {
           
           if (updateError) {
             log("Error updating subscription", updateError);
+          } else {
+            log("Successfully updated subscription in database");
           }
           
           return new Response(JSON.stringify({
@@ -231,16 +239,40 @@ serve(async (req) => {
             updated_at: new Date().toISOString()
           };
           
-          log("Creating/updating subscription in database", subscriptionData);
+          log("Upserting subscription in database", subscriptionData);
           
-          // Use upsert to handle both cases (update or insert)
-          const { error: upsertError } = await supabaseAdmin
+          // First check if a record exists
+          const { data: existingRecord } = await supabaseAdmin
             .from("user_subscriptions")
-            .upsert(subscriptionData)
-            .eq("user_id", userId);
-          
-          if (upsertError) {
-            log("Error upserting subscription", upsertError);
+            .select("id")
+            .eq("user_id", userId)
+            .maybeSingle();
+            
+          if (existingRecord) {
+            // Update existing record
+            log("Updating existing record");
+            const { error: updateError } = await supabaseAdmin
+              .from("user_subscriptions")
+              .update(subscriptionData)
+              .eq("user_id", userId);
+              
+            if (updateError) {
+              log("Error updating subscription", updateError);
+            } else {
+              log("Successfully updated subscription in database");
+            }
+          } else {
+            // Insert new record
+            log("Inserting new record");
+            const { error: insertError } = await supabaseAdmin
+              .from("user_subscriptions")
+              .insert(subscriptionData);
+              
+            if (insertError) {
+              log("Error inserting subscription", insertError);
+            } else {
+              log("Successfully inserted subscription into database");
+            }
           }
           
           return new Response(JSON.stringify({
@@ -256,6 +288,8 @@ serve(async (req) => {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
+      } else {
+        log("No customer found in Stripe for email", user.email);
       }
     } catch (stripeError) {
       log("Error checking Stripe", stripeError.message);
@@ -278,6 +312,8 @@ serve(async (req) => {
       
       if (updateError) {
         log("Error updating subscription status", updateError);
+      } else {
+        log("Successfully updated subscription status in database");
       }
     } else {
       // Create a record showing no subscription
@@ -293,6 +329,8 @@ serve(async (req) => {
       
       if (insertError) {
         log("Error inserting subscription record", insertError);
+      } else {
+        log("Successfully inserted subscription record into database");
       }
     }
     

@@ -22,7 +22,12 @@ const Subscribe = () => {
     if (subscriptionStatus === 'success') {
       toast.success('Thank you for subscribing! Processing your subscription...');
       // Force refresh subscription status after successful checkout
-      refreshSubscription();
+      const checkSubscription = async () => {
+        // Short delay to allow webhook processing
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        await refreshSubscription();
+      };
+      checkSubscription();
     } else if (subscriptionStatus === 'canceled') {
       toast.info('Subscription process canceled');
     }
@@ -147,6 +152,16 @@ const Subscribe = () => {
           </Button>
         </CardFooter>
       </Card>
+
+      {/* Debugging information */}
+      {import.meta.env.DEV && (
+        <div className="mt-8 p-4 bg-gray-100 rounded-lg">
+          <h3 className="font-bold mb-2">Debug Info</h3>
+          <pre className="text-xs">
+            {JSON.stringify({ hasActiveSubscription, isInTrialPeriod, trialEndsAt, isLoading, subscriptionLoading }, null, 2)}
+          </pre>
+        </div>
+      )}
     </div>
   );
 };
