@@ -89,6 +89,7 @@ serve(async (req) => {
 
     if (dbError) {
       log("Error querying database", dbError);
+      log("Database error details", JSON.stringify(dbError));
       // Don't return early, continue to check Stripe
     }
     
@@ -133,6 +134,7 @@ serve(async (req) => {
           
           if (updateError) {
             log("Error updating subscription", updateError);
+            log("Error details", JSON.stringify(updateError));
           } else {
             log("Successfully updated subscription in database");
           }
@@ -179,6 +181,7 @@ serve(async (req) => {
           
           if (updateError) {
             log("Error updating subscription", updateError);
+            log("Error details", JSON.stringify(updateError));
           } else {
             log("Successfully updated subscription in database");
           }
@@ -236,7 +239,7 @@ serve(async (req) => {
           
           log("Upserting subscription in database", subscriptionData);
           
-          // First check if a record exists
+          // Check if a record exists
           const { data: existingRecord } = await supabaseAdmin
             .from("user_subscriptions")
             .select("id")
@@ -253,18 +256,26 @@ serve(async (req) => {
               
             if (updateError) {
               log("Error updating subscription", updateError);
+              log("Error details", JSON.stringify(updateError));
             } else {
               log("Successfully updated subscription in database");
             }
           } else {
             // Insert new record
             log("Inserting new record");
+            const finalData = {
+              ...subscriptionData,
+              trial_start_date: new Date().toISOString(),
+              trial_end_date: null
+            };
+            
             const { error: insertError } = await supabaseAdmin
               .from("user_subscriptions")
-              .insert(subscriptionData);
+              .insert(finalData);
               
             if (insertError) {
               log("Error inserting subscription", insertError);
+              log("Error details", JSON.stringify(insertError));
             } else {
               log("Successfully inserted subscription into database");
             }
@@ -306,6 +317,7 @@ serve(async (req) => {
       
       if (updateError) {
         log("Error updating subscription status", updateError);
+        log("Error details", JSON.stringify(updateError));
       } else {
         log("Successfully updated subscription status in database");
       }
@@ -318,11 +330,14 @@ serve(async (req) => {
           user_id: userId,
           is_subscribed: false,
           subscription_status: 'inactive',
+          trial_start_date: new Date().toISOString(),
+          trial_end_date: null,
           updated_at: new Date().toISOString()
         });
       
       if (insertError) {
         log("Error inserting subscription record", insertError);
+        log("Error details", JSON.stringify(insertError));
       } else {
         log("Successfully inserted subscription record into database");
       }
@@ -336,6 +351,7 @@ serve(async (req) => {
     });
   } catch (error) {
     log("Unhandled error", error.message);
+    log("Error stack", error.stack);
     return new Response(
       JSON.stringify({ error: error.message || "Unknown error occurred" }),
       {

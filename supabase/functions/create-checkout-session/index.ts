@@ -70,11 +70,16 @@ serve(async (req) => {
 
     // Check if user already has a Stripe customer ID
     log("Checking for existing Stripe customer");
-    const { data: subscription } = await supabaseClient
+    const { data: subscription, error: fetchError } = await supabaseClient
       .from("user_subscriptions")
       .select("stripe_customer_id")
       .eq("user_id", user.id)
       .maybeSingle();
+    
+    if (fetchError) {
+      log(`Error fetching subscription: ${fetchError.message}`);
+      // Continue anyway, we'll create or find a customer
+    }
 
     let customerId = subscription?.stripe_customer_id;
 
@@ -101,19 +106,57 @@ serve(async (req) => {
         log(`Created new Stripe customer: ${customerId}`);
       }
 
-      // Save the customer ID to the user_subscriptions table
-      log("Saving customer ID to database");
-      const { error: upsertError } = await supabaseClient
+      // Check if user already has a record in user_subscriptions
+      const { data: existingRecord, error: recordError } = await supabaseClient
         .from("user_subscriptions")
-        .upsert({
-          user_id: user.id,
-          stripe_customer_id: customerId,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id' });
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+        
+      if (recordError) {
+        log(`Error checking existing record: ${recordError.message}`);
+      }
 
-      if (upsertError) {
-        log(`Error saving customer ID: ${upsertError.message}`);
-        // Continue anyway, this is not critical
+      // Prepare subscription data
+      const subscriptionData = {
+        user_id: user.id,
+        stripe_customer_id: customerId,
+        updated_at: new Date().toISOString()
+      };
+      
+      log("Saving customer ID to database");
+      
+      if (existingRecord) {
+        // Update existing record
+        const { error: updateError } = await supabaseClient
+          .from("user_subscriptions")
+          .update(subscriptionData)
+          .eq("user_id", user.id);
+          
+        if (updateError) {
+          log(`Error updating record: ${updateError.message}`);
+          log(`Update error details: ${JSON.stringify(updateError)}`);
+        } else {
+          log("Successfully updated customer ID in database");
+        }
+      } else {
+        // Insert new record
+        const { error: insertError } = await supabaseClient
+          .from("user_subscriptions")
+          .insert({
+            ...subscriptionData,
+            is_subscribed: false,
+            trial_start_date: new Date().toISOString(),
+            trial_end_date: null
+          });
+          
+        if (insertError) {
+          log(`Error inserting record: ${insertError.message}`);
+          log(`Insert error details: ${JSON.stringify(insertError)}`);
+          // Continue anyway, this is not critical for checkout
+        } else {
+          log("Successfully inserted new record into database");
+        }
       }
     }
 

@@ -115,6 +115,17 @@ serve(async (req) => {
             const subscription = await stripe.subscriptions.retrieve(checkoutSession.subscription.toString());
             log(`Subscription status: ${subscription.status}`);
             
+            // Check if there's already a record for this user
+            const { data: existingRecord, error: recordError } = await supabaseAdmin
+              .from("user_subscriptions")
+              .select("id")
+              .eq("user_id", userId)
+              .maybeSingle();
+              
+            if (recordError) {
+              log(`Error checking existing record: ${recordError.message}`);
+            }
+            
             // Prepare subscription data for the database
             const subscriptionData = {
               user_id: userId,
@@ -128,16 +139,37 @@ serve(async (req) => {
             
             log(`Subscription data: ${JSON.stringify(subscriptionData)}`);
             
-            // Update or create user subscription record
-            const { error: upsertError } = await supabaseAdmin
-              .from("user_subscriptions")
-              .upsert(subscriptionData, { onConflict: 'user_id' });
-            
-            if (upsertError) {
-              log(`Error upserting subscription: ${upsertError.message}`);
-              throw upsertError;
+            if (existingRecord) {
+              // Update existing record
+              const { error: updateError } = await supabaseAdmin
+                .from("user_subscriptions")
+                .update(subscriptionData)
+                .eq("user_id", userId);
+                
+              if (updateError) {
+                log(`Error updating subscription: ${updateError.message}`);
+                log(`Update error details: ${JSON.stringify(updateError)}`);
+                throw updateError;
+              } else {
+                log(`Subscription updated for user ${userId}`);
+              }
             } else {
-              log(`Subscription upserted for user ${userId}`);
+              // Insert new record
+              const { error: insertError } = await supabaseAdmin
+                .from("user_subscriptions")
+                .insert({
+                  ...subscriptionData,
+                  trial_start_date: new Date().toISOString(),
+                  trial_end_date: null
+                });
+                
+              if (insertError) {
+                log(`Error inserting subscription: ${insertError.message}`);
+                log(`Insert error details: ${JSON.stringify(insertError)}`);
+                throw insertError;
+              } else {
+                log(`Subscription inserted for user ${userId}`);
+              }
             }
           } else {
             log(`Invalid customer or missing email: ${customer}`);
@@ -172,6 +204,7 @@ serve(async (req) => {
     });
   } catch (error) {
     log(`Webhook error: ${error.message}`);
+    log(`Error stack: ${error.stack}`);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -217,6 +250,7 @@ async function handleInvoicePayment(supabase, event, stripe) {
 
       if (updateError) {
         console.error("Error updating subscription period:", updateError);
+        console.log("Error details:", JSON.stringify(updateError));
       } else {
         console.log(`Subscription period updated for user ${userId}`);
       }
@@ -259,6 +293,7 @@ async function handleSubscriptionDeleted(supabase, event) {
 
     if (updateError) {
       console.error("Error updating cancelled subscription:", updateError);
+      console.log("Error details:", JSON.stringify(updateError));
     } else {
       console.log(`Subscription cancelled for user ${userId}`);
     }
@@ -300,6 +335,7 @@ async function handleSubscriptionUpdated(supabase, event) {
 
     if (updateError) {
       console.error("Error updating subscription details:", updateError);
+      console.log("Error details:", JSON.stringify(updateError));
     } else {
       console.log(`Subscription details updated for user ${userId}`);
     }
