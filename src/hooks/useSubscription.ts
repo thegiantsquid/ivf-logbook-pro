@@ -96,6 +96,8 @@ export const useSubscription = () => {
         throw dbError;
       }
 
+      console.log('Database subscription check result:', subscription);
+
       if (!subscription) {
         console.log('No subscription found in database');
         setStatus({
@@ -133,7 +135,6 @@ export const useSubscription = () => {
     } catch (error) {
       console.error('Error checking subscription:', error);
       // Don't show toast error for subscription check as it's not critical
-      // toast.error('Failed to check subscription status');
       setStatus(prev => ({ 
         ...prev, 
         isLoading: false, 

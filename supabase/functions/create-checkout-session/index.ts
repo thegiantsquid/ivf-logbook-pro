@@ -100,6 +100,21 @@ serve(async (req) => {
         customerId = newCustomer.id;
         log(`Created new Stripe customer: ${customerId}`);
       }
+
+      // Save the customer ID to the user_subscriptions table
+      log("Saving customer ID to database");
+      const { error: upsertError } = await supabaseClient
+        .from("user_subscriptions")
+        .upsert({
+          user_id: user.id,
+          stripe_customer_id: customerId,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+
+      if (upsertError) {
+        log(`Error saving customer ID: ${upsertError.message}`);
+        // Continue anyway, this is not critical
+      }
     }
 
     // Create a new checkout session

@@ -120,8 +120,7 @@ serve(async (req) => {
           const updateData = {
             is_subscribed: isActive,
             subscription_status: stripeSubscription.status,
-            current_period_start: new Date(stripeSubscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(stripeSubscription.current_period_end * 1000).toISOString(),
+            subscription_end_date: new Date(stripeSubscription.current_period_end * 1000).toISOString(),
             cancel_at_period_end: stripeSubscription.cancel_at_period_end,
             updated_at: new Date().toISOString()
           };
@@ -142,7 +141,6 @@ serve(async (req) => {
             subscription: {
               id: stripeSubscription.id,
               status: stripeSubscription.status,
-              current_period_start: new Date(stripeSubscription.current_period_start * 1000).toISOString(),
               current_period_end: new Date(stripeSubscription.current_period_end * 1000).toISOString(),
               cancel_at_period_end: stripeSubscription.cancel_at_period_end,
               is_active: isActive
@@ -169,8 +167,7 @@ serve(async (req) => {
             is_subscribed: true,
             stripe_subscription_id: activeSubscription.id,
             subscription_status: activeSubscription.status,
-            current_period_start: new Date(activeSubscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(activeSubscription.current_period_end * 1000).toISOString(),
+            subscription_end_date: new Date(activeSubscription.current_period_end * 1000).toISOString(),
             updated_at: new Date().toISOString()
           };
           
@@ -190,7 +187,6 @@ serve(async (req) => {
             subscription: {
               id: activeSubscription.id,
               status: activeSubscription.status,
-              current_period_start: new Date(activeSubscription.current_period_start * 1000).toISOString(),
               current_period_end: new Date(activeSubscription.current_period_end * 1000).toISOString(),
               cancel_at_period_end: activeSubscription.cancel_at_period_end,
               is_active: true
@@ -234,8 +230,7 @@ serve(async (req) => {
             stripe_customer_id: customer.id,
             stripe_subscription_id: subscription.id,
             subscription_status: subscription.status,
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
             updated_at: new Date().toISOString()
           };
           
@@ -279,7 +274,6 @@ serve(async (req) => {
             subscription: {
               id: subscription.id,
               status: subscription.status,
-              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
               current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
               cancel_at_period_end: subscription.cancel_at_period_end,
               is_active: true

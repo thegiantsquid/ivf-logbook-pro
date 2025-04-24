@@ -115,58 +115,29 @@ serve(async (req) => {
             const subscription = await stripe.subscriptions.retrieve(checkoutSession.subscription.toString());
             log(`Subscription status: ${subscription.status}`);
             
-            // Check if user subscription record exists
-            const { data: existingSub, error: checkError } = await supabaseAdmin
-              .from("user_subscriptions")
-              .select("id")
-              .eq("user_id", userId)
-              .maybeSingle();
-              
-            if (checkError) {
-              log(`Error checking existing subscription: ${checkError.message}`);
-            }
-            
-            // Update or create user subscription record
+            // Prepare subscription data for the database
             const subscriptionData = {
               user_id: userId,
               is_subscribed: subscription.status === 'active',
               stripe_customer_id: checkoutSession.customer.toString(),
               stripe_subscription_id: checkoutSession.subscription.toString(),
               subscription_status: subscription.status,
-              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
               updated_at: new Date().toISOString()
             };
             
             log(`Subscription data: ${JSON.stringify(subscriptionData)}`);
             
-            if (existingSub) {
-              // Update existing subscription
-              log(`Updating existing subscription for user ${userId}`);
-              const { error: updateError } = await supabaseAdmin
-                .from("user_subscriptions")
-                .update(subscriptionData)
-                .eq("user_id", userId);
-      
-              if (updateError) {
-                log(`Error updating subscription: ${updateError.message}`);
-                throw updateError;
-              } else {
-                log(`Subscription updated for user ${userId}`);
-              }
+            // Update or create user subscription record
+            const { error: upsertError } = await supabaseAdmin
+              .from("user_subscriptions")
+              .upsert(subscriptionData, { onConflict: 'user_id' });
+            
+            if (upsertError) {
+              log(`Error upserting subscription: ${upsertError.message}`);
+              throw upsertError;
             } else {
-              // Insert new subscription record
-              log(`Creating new subscription for user ${userId}`);
-              const { error: insertError } = await supabaseAdmin
-                .from("user_subscriptions")
-                .insert(subscriptionData);
-      
-              if (insertError) {
-                log(`Error creating subscription: ${insertError.message}`);
-                throw insertError;
-              } else {
-                log(`New subscription created for user ${userId}`);
-              }
+              log(`Subscription upserted for user ${userId}`);
             }
           } else {
             log(`Invalid customer or missing email: ${customer}`);
@@ -239,8 +210,7 @@ async function handleInvoicePayment(supabase, event, stripe) {
         .update({
           is_subscribed: true,
           subscription_status: subscription.status,
-          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+          subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
           updated_at: new Date().toISOString()
         })
         .eq("user_id", userId);
@@ -322,15 +292,8 @@ async function handleSubscriptionUpdated(supabase, event) {
       .from("user_subscriptions")
       .update({
         subscription_status: updatedSubscription.status,
-        current_period_start: new Date(updatedSubscription.current_period_start * 1000).toISOString(),
-        current_period_end: new Date(updatedSubscription.current_period_end * 1000).toISOString(),
+        subscription_end_date: new Date(updatedSubscription.current_period_end * 1000).toISOString(),
         cancel_at_period_end: updatedSubscription.cancel_at_period_end,
-        cancel_at: updatedSubscription.cancel_at 
-          ? new Date(updatedSubscription.cancel_at * 1000).toISOString() 
-          : null,
-        canceled_at: updatedSubscription.canceled_at 
-          ? new Date(updatedSubscription.canceled_at * 1000).toISOString() 
-          : null,
         updated_at: new Date().toISOString()
       })
       .eq("user_id", userId);

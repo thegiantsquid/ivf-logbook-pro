@@ -11,6 +11,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 const Subscribe = () => {
   const { hasActiveSubscription, isInTrialPeriod, trialEndsAt, refreshSubscription, isLoading: subscriptionLoading } = useSubscription();
   const [isLoading, setIsLoading] = useState(false);
+  const [processingCheckout, setProcessingCheckout] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -20,18 +21,37 @@ const Subscribe = () => {
     const subscriptionStatus = searchParams.get('subscription');
     
     if (subscriptionStatus === 'success') {
+      setProcessingCheckout(true);
       toast.success('Thank you for subscribing! Processing your subscription...');
+      
       // Force refresh subscription status after successful checkout
       const checkSubscription = async () => {
-        // Short delay to allow webhook processing
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        await refreshSubscription();
+        try {
+          // Short delay to allow webhook processing
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Try multiple times to refresh the subscription status
+          for (let i = 0; i < 5; i++) {
+            await refreshSubscription();
+            // If we've got a successful subscription, stop checking
+            if (hasActiveSubscription) {
+              break;
+            }
+            // Wait 3 seconds between checks
+            if (i < 4) {
+              await new Promise(resolve => setTimeout(resolve, 3000));
+            }
+          }
+        } finally {
+          setProcessingCheckout(false);
+        }
       };
+      
       checkSubscription();
     } else if (subscriptionStatus === 'canceled') {
       toast.info('Subscription process canceled');
     }
-  }, [searchParams, refreshSubscription]);
+  }, [searchParams, refreshSubscription, hasActiveSubscription]);
   
   useEffect(() => {
     // Periodically refresh subscription status when on this page
@@ -112,7 +132,7 @@ const Subscribe = () => {
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-primary">$19</span>
+            <span className="text-3xl font-bold text-primary">£19</span>
             <span className="text-card-foreground/70">/month</span>
           </div>
           
@@ -130,12 +150,17 @@ const Subscribe = () => {
             onClick={handleSubscribe} 
             className="w-full" 
             size="lg"
-            disabled={isLoading || hasActiveSubscription || subscriptionLoading}
+            disabled={isLoading || hasActiveSubscription || subscriptionLoading || processingCheckout}
           >
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Processing...
+              </>
+            ) : processingCheckout ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Processing subscription...
               </>
             ) : subscriptionLoading ? (
               <>
@@ -157,8 +182,15 @@ const Subscribe = () => {
       {import.meta.env.DEV && (
         <div className="mt-8 p-4 bg-gray-100 rounded-lg">
           <h3 className="font-bold mb-2">Debug Info</h3>
-          <pre className="text-xs">
-            {JSON.stringify({ hasActiveSubscription, isInTrialPeriod, trialEndsAt, isLoading, subscriptionLoading }, null, 2)}
+          <pre className="text-xs overflow-x-auto">
+            {JSON.stringify({ 
+              hasActiveSubscription, 
+              isInTrialPeriod, 
+              trialEndsAt, 
+              isLoading, 
+              subscriptionLoading,
+              processingCheckout
+            }, null, 2)}
           </pre>
         </div>
       )}
