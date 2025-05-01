@@ -9,11 +9,11 @@ import {
   Shield, 
   Users, 
   Activity, 
-  Calendar, 
-  MedicalCross, 
+  Calendar,
   Clock,
   CheckCircle2
 } from 'lucide-react';
+import MedicalCross from '@/components/icons/MedicalCross';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 
 const LandingPage = () => {
