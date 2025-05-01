@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,7 @@ import {
   Clock,
   CheckCircle2,
   MessageSquare,
-  Medkit
+  Briefcase
 } from 'lucide-react';
 import MedicalCross from '@/components/icons/MedicalCross';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
@@ -136,7 +135,7 @@ const LandingPage = () => {
             <Card className="bg-card hover:shadow-md transition-all duration-300">
               <CardContent className="pt-6">
                 <div className="rounded-full bg-primary/10 p-3 w-12 h-12 flex items-center justify-center mb-4">
-                  <Medkit className="h-6 w-6 text-primary" />
+                  <Briefcase className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="text-xl font-medium mb-2">Subscription Options</h3>
                 <p className="text-muted-foreground">
@@ -268,7 +267,7 @@ const LandingPage = () => {
             {/* Specialty 1 */}
             <div className="bg-card p-4 rounded-lg border border-border text-center hover:shadow-md transition-all">
               <div className="rounded-full bg-primary/10 p-3 w-12 h-12 flex items-center justify-center mx-auto mb-3">
-                <Medkit className="h-6 w-6 text-primary" />
+                <Briefcase className="h-6 w-6 text-primary" />
               </div>
               <h4 className="font-medium">Cardiology</h4>
             </div>
