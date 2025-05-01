@@ -1,11 +1,11 @@
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import Dashboard from './Dashboard';
+import LandingPage from './LandingPage';
 
 const Index = () => {
-  // Render the Dashboard component directly
-  return <Dashboard />;
+  // Render the LandingPage component directly
+  return <LandingPage />;
 };
 
 export default Index;

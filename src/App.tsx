@@ -22,7 +22,6 @@ import Profile from '@/pages/Profile';
 import Summary from '@/pages/Summary';
 import Settings from '@/pages/Settings';
 import NotFound from '@/pages/NotFound';
-import Index from '@/pages/Index';
 import Subscribe from '@/pages/Subscribe';
 import SubscriptionManagement from '@/pages/SubscriptionManagement';
 import LandingPage from '@/pages/LandingPage';
@@ -39,28 +38,29 @@ function App() {
         <TooltipProvider>
           <AuthProvider>
             <BrowserRouter>
-              <TooltipProvider>
-                <Routes>
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/" element={<Layout />}>
-                    <Route index element={<LandingPage />} />
-                    <Route path="dashboard" element={<Dashboard />} />
-                    <Route path="records" element={<ViewRecords />} />
-                    <Route path="records/edit/:id" element={<EditRecord />} />
-                    <Route path="add-record" element={<AddRecord />} />
-                    <Route path="summary" element={<Summary />} />
-                    <Route path="profile" element={<Profile />} />
-                    <Route path="settings" element={<Settings />} />
-                    <Route path="subscribe" element={<Subscribe />} />
-                    <Route path="subscription" element={<SubscriptionManagement />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Route>
-                </Routes>
-              </TooltipProvider>
+              <Routes>
+                {/* Public routes outside of Layout */}
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                
+                {/* Protected routes inside Layout */}
+                <Route path="/" element={<Layout />}>
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="records" element={<ViewRecords />} />
+                  <Route path="records/edit/:id" element={<EditRecord />} />
+                  <Route path="add-record" element={<AddRecord />} />
+                  <Route path="summary" element={<Summary />} />
+                  <Route path="profile" element={<Profile />} />
+                  <Route path="settings" element={<Settings />} />
+                  <Route path="subscribe" element={<Subscribe />} />
+                  <Route path="subscription" element={<SubscriptionManagement />} />
+                  <Route path="*" element={<NotFound />} />
+                </Route>
+              </Routes>
+              <Toaster />
             </BrowserRouter>
           </AuthProvider>
         </TooltipProvider>
-        <Toaster />
       </ThemeProvider>
     </QueryClientProvider>
   );
