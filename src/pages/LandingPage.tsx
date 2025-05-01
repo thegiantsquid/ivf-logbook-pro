@@ -8,10 +8,11 @@ import {
   LayoutDashboard, 
   Shield, 
   Users, 
-  Activity, 
   Calendar,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  MessageSquare,
+  Medkit
 } from 'lucide-react';
 import MedicalCross from '@/components/icons/MedicalCross';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
@@ -45,8 +46,8 @@ const LandingPage = () => {
             <div className="flex-1 animate-slide-in-from-right">
               <div className="neumorphic rounded-2xl p-2 bg-background/50 backdrop-blur-sm">
                 <img 
-                  src="/placeholder.svg" 
-                  alt="LogBook Pro Dashboard Preview" 
+                  src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                  alt="Medical professional using LogBook Pro" 
                   className="w-full rounded-xl shadow-lg border border-border"
                 />
               </div>
@@ -59,9 +60,9 @@ const LandingPage = () => {
       <section id="features" className="py-20 bg-muted/30">
         <div className="container px-4 mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Powerful Features for Medical Professionals</h2>
+            <h2 className="text-3xl font-bold mb-4">Features Available in LogBook Pro</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              LogBook Pro offers a comprehensive suite of tools designed specifically for healthcare providers worldwide.
+              LogBook Pro offers tools designed specifically for healthcare providers to manage medical records efficiently.
             </p>
           </div>
 
@@ -72,9 +73,9 @@ const LandingPage = () => {
                 <div className="rounded-full bg-primary/10 p-3 w-12 h-12 flex items-center justify-center mb-4">
                   <FileText className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-medium mb-2">Comprehensive Records</h3>
+                <h3 className="text-xl font-medium mb-2">Medical Records Management</h3>
                 <p className="text-muted-foreground">
-                  Seamlessly document and access patient records with our intuitive interface designed for healthcare workflows.
+                  Add, view, and edit patient records with our intuitive interface designed for healthcare workflows.
                 </p>
               </CardContent>
             </Card>
@@ -85,9 +86,9 @@ const LandingPage = () => {
                 <div className="rounded-full bg-primary/10 p-3 w-12 h-12 flex items-center justify-center mb-4">
                   <LayoutDashboard className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-medium mb-2">Analytics Dashboard</h3>
+                <h3 className="text-xl font-medium mb-2">Interactive Dashboard</h3>
                 <p className="text-muted-foreground">
-                  Gain valuable insights with customizable dashboards showing key metrics and trends relevant to your practice.
+                  Access key metrics and patient information at a glance with our comprehensive dashboard.
                 </p>
               </CardContent>
             </Card>
@@ -96,11 +97,11 @@ const LandingPage = () => {
             <Card className="bg-card hover:shadow-md transition-all duration-300">
               <CardContent className="pt-6">
                 <div className="rounded-full bg-primary/10 p-3 w-12 h-12 flex items-center justify-center mb-4">
-                  <Shield className="h-6 w-6 text-primary" />
+                  <MessageSquare className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-medium mb-2">Advanced Security</h3>
+                <h3 className="text-xl font-medium mb-2">Data Summaries</h3>
                 <p className="text-muted-foreground">
-                  Enterprise-grade security ensures patient data remains protected and compliant with global healthcare standards.
+                  View summaries of collected data to identify trends and inform clinical decisions.
                 </p>
               </CardContent>
             </Card>
@@ -109,11 +110,11 @@ const LandingPage = () => {
             <Card className="bg-card hover:shadow-md transition-all duration-300">
               <CardContent className="pt-6">
                 <div className="rounded-full bg-primary/10 p-3 w-12 h-12 flex items-center justify-center mb-4">
-                  <Calendar className="h-6 w-6 text-primary" />
+                  <Shield className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-medium mb-2">Scheduling & Reminders</h3>
+                <h3 className="text-xl font-medium mb-2">Secure Authentication</h3>
                 <p className="text-muted-foreground">
-                  Efficiently manage appointments and follow-ups with automated scheduling and notification features.
+                  Enterprise-grade security ensures patient data remains protected and compliant with healthcare standards.
                 </p>
               </CardContent>
             </Card>
@@ -122,11 +123,11 @@ const LandingPage = () => {
             <Card className="bg-card hover:shadow-md transition-all duration-300">
               <CardContent className="pt-6">
                 <div className="rounded-full bg-primary/10 p-3 w-12 h-12 flex items-center justify-center mb-4">
-                  <Activity className="h-6 w-6 text-primary" />
+                  <Users className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-medium mb-2">Treatment Tracking</h3>
+                <h3 className="text-xl font-medium mb-2">User Profile Management</h3>
                 <p className="text-muted-foreground">
-                  Monitor treatment progress over time with visual representations and detailed history logs.
+                  Customize your profile and manage your account settings with ease.
                 </p>
               </CardContent>
             </Card>
@@ -135,11 +136,11 @@ const LandingPage = () => {
             <Card className="bg-card hover:shadow-md transition-all duration-300">
               <CardContent className="pt-6">
                 <div className="rounded-full bg-primary/10 p-3 w-12 h-12 flex items-center justify-center mb-4">
-                  <Users className="h-6 w-6 text-primary" />
+                  <Medkit className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-medium mb-2">Team Collaboration</h3>
+                <h3 className="text-xl font-medium mb-2">Subscription Options</h3>
                 <p className="text-muted-foreground">
-                  Facilitate seamless communication between healthcare providers with collaborative tools and shared access.
+                  Choose the plan that fits your needs with our flexible subscription options.
                 </p>
               </CardContent>
             </Card>
@@ -164,7 +165,7 @@ const LandingPage = () => {
                 <div className="bg-card p-8 rounded-xl border border-border">
                   <div className="flex items-center mb-6">
                     <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mr-4">
-                      <span className="text-xl font-bold text-primary">DR</span>
+                      <span className="text-xl font-bold text-primary">RC</span>
                     </div>
                     <div>
                       <h4 className="font-medium">Dr. Rebecca Chen</h4>
@@ -212,6 +213,42 @@ const LandingPage = () => {
                   </p>
                 </div>
               </CarouselItem>
+
+              {/* Testimonial 4 - NEW */}
+              <CarouselItem>
+                <div className="bg-card p-8 rounded-xl border border-border">
+                  <div className="flex items-center mb-6">
+                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mr-4">
+                      <span className="text-xl font-bold text-primary">SK</span>
+                    </div>
+                    <div>
+                      <h4 className="font-medium">Dr. Sarah Kim</h4>
+                      <p className="text-sm text-muted-foreground">Pediatrician, South Korea</p>
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground italic">
+                    "As a pediatrician with a busy practice, LogBook Pro has simplified my record keeping enormously. The dashboard gives me quick insights into my young patients' health trends, helping me provide better care."
+                  </p>
+                </div>
+              </CarouselItem>
+
+              {/* Testimonial 5 - NEW */}
+              <CarouselItem>
+                <div className="bg-card p-8 rounded-xl border border-border">
+                  <div className="flex items-center mb-6">
+                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mr-4">
+                      <span className="text-xl font-bold text-primary">MP</span>
+                    </div>
+                    <div>
+                      <h4 className="font-medium">Dr. Miguel Patel</h4>
+                      <p className="text-sm text-muted-foreground">Surgeon, Brazil</p>
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground italic">
+                    "The detailed record-keeping capabilities have been crucial for my surgical practice. Being able to quickly access previous procedures and outcomes helps me provide the best patient care possible."
+                  </p>
+                </div>
+              </CarouselItem>
             </CarouselContent>
           </Carousel>
         </div>
@@ -231,7 +268,7 @@ const LandingPage = () => {
             {/* Specialty 1 */}
             <div className="bg-card p-4 rounded-lg border border-border text-center hover:shadow-md transition-all">
               <div className="rounded-full bg-primary/10 p-3 w-12 h-12 flex items-center justify-center mx-auto mb-3">
-                <Activity className="h-6 w-6 text-primary" />
+                <Medkit className="h-6 w-6 text-primary" />
               </div>
               <h4 className="font-medium">Cardiology</h4>
             </div>
