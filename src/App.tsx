@@ -25,6 +25,7 @@ import NotFound from '@/pages/NotFound';
 import Index from '@/pages/Index';
 import Subscribe from '@/pages/Subscribe';
 import SubscriptionManagement from '@/pages/SubscriptionManagement';
+import LandingPage from '@/pages/LandingPage';
 
 // Style
 import './App.css';
@@ -42,7 +43,7 @@ function App() {
                 <Routes>
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/" element={<Layout />}>
-                    <Route index element={<Index />} />
+                    <Route index element={<LandingPage />} />
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="records" element={<ViewRecords />} />
                     <Route path="records/edit/:id" element={<EditRecord />} />
