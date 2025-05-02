@@ -2,23 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { 
-  FileText, 
-  LayoutDashboard, 
-  Shield, 
-  Users, 
-  Calendar,
-  Clock,
-  CheckCircle2,
-  MessageSquare,
-  Briefcase
-} from 'lucide-react';
+import { FileText, LayoutDashboard, Shield, Users, Calendar, Clock, CheckCircle2, MessageSquare, Briefcase } from 'lucide-react';
 import MedicalCross from '@/components/icons/MedicalCross';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
-
 const LandingPage = () => {
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 lg:py-28">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/10 to-transparent"></div>
@@ -44,11 +32,7 @@ const LandingPage = () => {
             </div>
             <div className="flex-1 animate-slide-in-from-right">
               <div className="neumorphic rounded-2xl p-2 bg-background/50 backdrop-blur-sm">
-                <img 
-                  src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-                  alt="Medical professional using LogBook Pro" 
-                  className="w-full rounded-xl shadow-lg border border-border"
-                />
+                <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Medical professional using LogBook Pro" className="w-full rounded-xl shadow-lg border border-border" />
               </div>
             </div>
           </div>
@@ -168,7 +152,7 @@ const LandingPage = () => {
                     </div>
                     <div>
                       <h4 className="font-medium">Dr. Rebecca Chen</h4>
-                      <p className="text-sm text-muted-foreground">Cardiologist, Singapore</p>
+                      <p className="text-sm text-muted-foreground"> Singapore</p>
                     </div>
                   </div>
                   <p className="text-muted-foreground italic">
@@ -408,8 +392,6 @@ const LandingPage = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default LandingPage;
