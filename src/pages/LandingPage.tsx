@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { FileText, LayoutDashboard, Shield, Users, Calendar, Clock, CheckCircle2, MessageSquare, Briefcase } from 'lucide-react';
 import MedicalCross from '@/components/icons/MedicalCross';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+
 const LandingPage = () => {
   return <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -394,4 +395,5 @@ const LandingPage = () => {
       </footer>
     </div>;
 };
+
 export default LandingPage;
