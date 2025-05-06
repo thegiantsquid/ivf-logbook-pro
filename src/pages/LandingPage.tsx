@@ -32,7 +32,7 @@ const LandingPage = () => {
             </div>
             <div className="flex-1 animate-slide-in-from-right">
               <div className="neumorphic rounded-2xl p-2 bg-background/50 backdrop-blur-sm">
-                <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Medical professional using LogBook Pro" className="w-full rounded-xl shadow-lg border border-border" />
+                <img alt="Medical professional using LogBook Pro" className="w-full rounded-xl shadow-lg border border-border" src="/lovable-uploads/cfcce29c-18f1-4db2-b322-9360a7f901fb.png" />
               </div>
             </div>
           </div>
