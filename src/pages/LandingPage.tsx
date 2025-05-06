@@ -311,8 +311,8 @@ const LandingPage = () => {
               <Button size="lg" className="px-8" asChild>
                 <Link to="/login">Get Started Today</Link>
               </Button>
-              <Button size="lg" variant="outline" className="px-8" asChild>
-                
+              <Button size="lg" variant="outline" className="px-8">
+                Contact Sales
               </Button>
             </div>
             <div className="mt-12 flex flex-col md:flex-row items-center justify-center gap-6">
