@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { z } from 'zod';
@@ -49,13 +48,16 @@ const LoginPage: React.FC = () => {
   } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("login");
   const location = useLocation();
-  const [redirectPath, setRedirectPath] = useState<string>('/');
+  const navigate = useNavigate();
+  const [redirectPath, setRedirectPath] = useState<string>('/dashboard');
   
   useEffect(() => {
     // Get redirect path from location state if available
     const state = location.state as { from?: { pathname: string } } | undefined;
     if (state && state.from) {
       setRedirectPath(state.from.pathname);
+    } else {
+      setRedirectPath('/dashboard'); // Default to dashboard if no specific redirect path
     }
   }, [location]);
 
@@ -77,20 +79,29 @@ const LoginPage: React.FC = () => {
   });
 
   // Redirect if already logged in
-  if (currentUser) {
-    console.log('User is already logged in, redirecting to:', redirectPath);
-    return <Navigate to={redirectPath} replace />;
-  }
+  useEffect(() => {
+    if (currentUser) {
+      console.log('User is logged in, redirecting to:', redirectPath);
+      navigate(redirectPath, { replace: true });
+    }
+  }, [currentUser, navigate, redirectPath]);
   
   const handleLogin = async (values: LoginFormValues) => {
     console.log('Attempting login with:', values.email);
     await signInWithEmail(values.email, values.password);
+    // The redirection will be handled by the useEffect above when currentUser is updated
   };
   
   const handleRegister = async (values: RegisterFormValues) => {
     console.log('Attempting registration with:', values.email);
     await registerWithEmail(values.email, values.password);
   };
+  
+  // Use Navigate component only for initial render redirect
+  // Otherwise we use the useEffect above to handle redirects after authentication state changes
+  if (currentUser) {
+    return null; // Return null as the useEffect will handle the navigation
+  }
   
   return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
       <div className="w-full max-w-md">

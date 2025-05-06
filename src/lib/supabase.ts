@@ -12,7 +12,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storage: localStorage, // Use localStorage for session storage
     persistSession: true,  // Persist session across browser sessions
     autoRefreshToken: true, // Auto-refresh token before it expires
-    detectSessionInUrl: true // Allow detecting session info in URL
+    detectSessionInUrl: true, // Allow detecting session info in URL
+    flowType: 'pkce' // Use PKCE flow for added security
   }
 });
 
