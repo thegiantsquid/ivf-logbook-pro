@@ -12,6 +12,8 @@ import { X, FileSpreadsheet, Download, CalendarIcon, FileUp, Settings, Loader2 }
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useSubscription } from '@/hooks/useSubscription';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TableFiltersProps {
   globalFilter: string;
@@ -54,10 +56,12 @@ const TableFilters: React.FC<TableFiltersProps> = ({
   includeProcedureSummary = false,
   setIncludeProcedureSummary = () => {}
 }) => {
+  const { hasActiveSubscription, isInTrialPeriod } = useSubscription();
   const [isFileDialogOpen, setIsFileDialogOpen] = useState(false);
   const [isPdfDialogOpen, setIsPdfDialogOpen] = useState(false);
   
   const hasDateFilter = fromDate || toDate;
+  const canUseImport = hasActiveSubscription && !isInTrialPeriod;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -265,14 +269,33 @@ const TableFilters: React.FC<TableFiltersProps> = ({
           )}
         </Button>
 
-        {/* File Import */}
-        <Dialog open={isFileDialogOpen} onOpenChange={setIsFileDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
-              <FileUp className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Import</span>
-            </Button>
-          </DialogTrigger>
+        {/* File Import - Now with conditional access */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => canUseImport && setIsFileDialogOpen(true)}
+                  disabled={!canUseImport}
+                  className={!canUseImport ? "cursor-not-allowed opacity-60" : ""}
+                >
+                  <FileUp className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Import</span>
+                </Button>
+              </div>
+            </TooltipTrigger>
+            {!canUseImport && (
+              <TooltipContent>
+                <p>Bulk import is available only with a paid subscription</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+
+        {/* File Import Dialog */}
+        <Dialog open={isFileDialogOpen && canUseImport} onOpenChange={setIsFileDialogOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Import Records from Excel</DialogTitle>
@@ -305,7 +328,7 @@ const TableFilters: React.FC<TableFiltersProps> = ({
                 <Input
                   id="file-upload"
                   type="file"
-                  accept=".xlsx,.xls"
+                  accept=".xlsx,.xls,.csv"
                 />
               </div>
             </div>

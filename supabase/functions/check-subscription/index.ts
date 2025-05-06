@@ -66,6 +66,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           subscribed: false,
+          isInTrial: false,
           trialEndsAt: null
         }),
         {
