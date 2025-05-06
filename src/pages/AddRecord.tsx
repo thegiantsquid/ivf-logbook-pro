@@ -13,11 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/lib/toast';
 import { IVFRecord, ProcedureType, SupervisionType, HospitalType } from '@/types';
-import { FileUp, FilePlus, Plus, FileDown, Download, Lock } from 'lucide-react';
+import { FileUp, FilePlus, Plus, FileDown, Download } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { TrialBanner } from '@/components/subscription/TrialBanner';
 import * as XLSX from 'xlsx';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type FormValues = Omit<IVFRecord, 'id' | 'createdAt' | 'updatedAt' | 'createdBy'>;
 const supervisionTypes: SupervisionType[] = ['Direct', 'Indirect', 'Independent', 'Teaching'];
@@ -50,10 +49,6 @@ const AddRecord: React.FC = () => {
       hospital: ''
     }
   });
-  
-  // Allow bulk import only for paid subscriptions (not free tier or trial)
-  const canUseBulkImport = hasActiveSubscription && !isInTrialPeriod;
-  const [activeTab, setActiveTab] = useState('manual');
   
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
@@ -220,44 +215,16 @@ const AddRecord: React.FC = () => {
   return <div className="space-y-6">
       <TrialBanner />
       
-      <Tabs 
-        defaultValue="manual" 
-        className="w-full"
-        value={activeTab}
-        onValueChange={(value) => {
-          // Only allow changing to import tab if user has a paid subscription
-          if (value === "import" && !canUseBulkImport) {
-            return;
-          }
-          setActiveTab(value);
-        }}
-      >
+      <Tabs defaultValue="manual" className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="manual">
             <FilePlus className="mr-2 h-4 w-4" />
             Add Manually
           </TabsTrigger>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="w-full">
-                  <TabsTrigger value="import" disabled={!canUseBulkImport} className={!canUseBulkImport ? "cursor-not-allowed" : ""}>
-                    {canUseBulkImport ? (
-                      <FileUp className="mr-2 h-4 w-4" />
-                    ) : (
-                      <Lock className="mr-2 h-4 w-4" />
-                    )}
-                    Bulk Import
-                  </TabsTrigger>
-                </div>
-              </TooltipTrigger>
-              {!canUseBulkImport && (
-                <TooltipContent>
-                  <p>Bulk import is available only with a paid subscription</p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
+          <TabsTrigger value="import">
+            <FileUp className="mr-2 h-4 w-4" />
+            Bulk Import
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="manual" className="mt-4">
@@ -447,89 +414,67 @@ const AddRecord: React.FC = () => {
           </Card>
         </TabsContent>
         
-        {/* Only render this tab's content if the user has a paid subscription */}
         <TabsContent value="import" className="mt-4">
-          {canUseBulkImport ? (
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle>Bulk Import Records</CardTitle>
-                <CardDescription>
-                  Import multiple records from an Excel or CSV file
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg">
-                  <FileUp className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Upload Excel File</h3>
-                  <p className="text-sm text-muted-foreground mb-4 text-center">
-                    Your file should have columns matching the record fields: mrn, date, age, procedure, supervision, etc.
-                  </p>
-                  <Input 
-                    type="file" 
-                    accept=".xlsx,.xls,.csv" 
-                    onChange={handleFileSelection} 
-                    disabled={isImporting} 
-                    className="max-w-sm" 
-                  />
-                  
-                  <div className="mt-4 w-full max-w-sm">
-                    <Button 
-                      variant="outline" 
-                      className="w-full" 
-                      onClick={downloadTemplateFile}
-                      disabled={isImporting}
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Download Template File
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="flex flex-col space-y-4">
-                <div className="text-sm text-muted-foreground">
-                  <p>Required columns:</p>
-                  <ul className="list-disc pl-5 mt-1">
-                    <li>mrn - Patient medical record number</li>
-                    <li>date - Procedure date (YYYY-MM-DD)</li>
-                    <li>age - Patient age</li>
-                    <li>procedure - Type of procedure</li>
-                    <li>supervision - Supervision level</li>
-                    <li>hospital - Hospital name</li>
-                    <li>complicationNotes (optional) - Notes on complications</li>
-                    <li>operationNotes (optional) - General procedure notes</li>
-                  </ul>
-                </div>
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle>Bulk Import Records</CardTitle>
+              <CardDescription>
+                Import multiple records from an Excel or CSV file
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg">
+                <FileUp className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">Upload Excel File</h3>
+                <p className="text-sm text-muted-foreground mb-4 text-center">
+                  Your file should have columns matching the record fields: mrn, date, age, procedure, supervision, etc.
+                </p>
+                <Input 
+                  type="file" 
+                  accept=".xlsx,.xls,.csv" 
+                  onChange={handleFileSelection} 
+                  disabled={isImporting} 
+                  className="max-w-sm" 
+                />
                 
-                <div className="w-full flex justify-end">
+                <div className="mt-4 w-full max-w-sm">
                   <Button 
-                    onClick={handleFileUpload} 
-                    disabled={isImporting || !selectedFile}
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={downloadTemplateFile}
+                    disabled={isImporting}
                   >
-                    {isImporting ? 'Importing...' : 'Upload File'}
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Template File
                   </Button>
                 </div>
-              </CardFooter>
-            </Card>
-          ) : (
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle>Bulk Import Records</CardTitle>
-                <CardDescription>
-                  This feature requires a paid subscription
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center justify-center p-6">
-                <Lock className="h-16 w-16 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">Premium Feature</h3>
-                <p className="text-sm text-muted-foreground mb-4 text-center">
-                  Bulk import is only available with a paid subscription. Upgrade now to unlock this and other premium features.
-                </p>
-                <Button onClick={() => navigate('/subscribe')} className="mt-4">
-                  Upgrade to Premium
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-4">
+              <div className="text-sm text-muted-foreground">
+                <p>Required columns:</p>
+                <ul className="list-disc pl-5 mt-1">
+                  <li>mrn - Patient medical record number</li>
+                  <li>date - Procedure date (YYYY-MM-DD)</li>
+                  <li>age - Patient age</li>
+                  <li>procedure - Type of procedure</li>
+                  <li>supervision - Supervision level</li>
+                  <li>hospital - Hospital name</li>
+                  <li>complicationNotes (optional) - Notes on complications</li>
+                  <li>operationNotes (optional) - General procedure notes</li>
+                </ul>
+              </div>
+              
+              <div className="w-full flex justify-end">
+                <Button 
+                  onClick={handleFileUpload} 
+                  disabled={isImporting || !selectedFile}
+                >
+                  {isImporting ? 'Importing...' : 'Upload File'}
                 </Button>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            </CardFooter>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>;
