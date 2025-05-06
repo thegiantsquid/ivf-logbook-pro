@@ -25,6 +25,7 @@ import NotFound from '@/pages/NotFound';
 import Subscribe from '@/pages/Subscribe';
 import SubscriptionManagement from '@/pages/SubscriptionManagement';
 import LandingPage from '@/pages/LandingPage';
+import Index from '@/pages/Index';
 
 // Style
 import './App.css';
@@ -42,6 +43,7 @@ function App() {
                 {/* Public routes outside of Layout */}
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/index" element={<Index />} />
                 
                 {/* Protected routes inside Layout */}
                 <Route path="/" element={<Layout />}>
