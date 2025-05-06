@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { TooltipProvider } from '@radix-ui/react-tooltip';
@@ -42,9 +42,6 @@ function App() {
                 {/* Public routes outside of Layout */}
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<LoginPage />} />
-                
-                {/* Redirect root to dashboard when authenticated (handled in Layout) */}
-                <Route path="/" element={<Navigate to="/dashboard" />} />
                 
                 {/* Protected routes inside Layout */}
                 <Route path="/" element={<Layout />}>
