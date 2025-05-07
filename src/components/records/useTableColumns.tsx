@@ -12,6 +12,13 @@ import {
 } from '@/components/ui/select';
 import { useRecords } from '@/hooks/useRecords';
 
+// Define a proper type for our column metadata
+interface ColumnMetaType {
+  filterComponent?: React.FC<{
+    column: any;
+  }>;
+}
+
 export const useTableColumns = () => {
   // Access custom procedure and hospital types for the select filters
   const { customProcedureTypes, customHospitalTypes } = useRecords();
@@ -24,7 +31,7 @@ export const useTableColumns = () => {
     "Assisted"
   ];
 
-  const columns: ColumnDef<IVFRecord>[] = useMemo(() => [
+  const columns: ColumnDef<IVFRecord, any>[] = useMemo(() => [
     {
       accessorKey: 'mrn',
       header: 'MRN',
@@ -68,7 +75,7 @@ export const useTableColumns = () => {
             />
           </div>
         ),
-      },
+      } as ColumnMetaType,
     },
     {
       accessorKey: 'procedure',
@@ -94,7 +101,7 @@ export const useTableColumns = () => {
             </SelectContent>
           </Select>
         ),
-      },
+      } as ColumnMetaType,
     },
     {
       accessorKey: 'supervision',
@@ -120,7 +127,7 @@ export const useTableColumns = () => {
             </SelectContent>
           </Select>
         ),
-      },
+      } as ColumnMetaType,
     },
     {
       accessorKey: 'hospital',
@@ -146,7 +153,7 @@ export const useTableColumns = () => {
             </SelectContent>
           </Select>
         ),
-      },
+      } as ColumnMetaType,
     },
     {
       accessorKey: 'complicationNotes',

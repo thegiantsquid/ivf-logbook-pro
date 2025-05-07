@@ -18,6 +18,13 @@ import {
 import { Filter, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+// Define a type for column metadata that includes the filterComponent
+interface ColumnMetaType {
+  filterComponent?: React.FC<{
+    column: any;
+  }>;
+}
+
 interface RecordsTableProps {
   table: TableType<IVFRecord>;
   columns: ColumnDef<IVFRecord>[];
@@ -106,9 +113,10 @@ const RecordsTable: React.FC<RecordsTableProps> = ({
                 </TableHead>
                 {headerGroup.headers.map((header) => (
                   <TableHead key={`filter-${header.id}`} className="p-1">
-                    {header.column.getCanFilter() && header.column.columnDef.meta?.filterComponent && (
+                    {header.column.getCanFilter() && 
+                     (header.column.columnDef.meta as ColumnMetaType)?.filterComponent && (
                       flexRender(
-                        header.column.columnDef.meta.filterComponent,
+                        (header.column.columnDef.meta as ColumnMetaType).filterComponent,
                         { column: header.column }
                       )
                     )}
