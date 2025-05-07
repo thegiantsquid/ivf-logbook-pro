@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Sidebar as SidebarWrapper, SidebarContent, SidebarHeader, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
@@ -20,7 +21,7 @@ const Sidebar: React.FC = () => {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <NavLink to="/" className={({
+                  <NavLink to="/dashboard" className={({
                   isActive
                 }) => isActive ? 'text-primary bg-primary/5' : ''}>
                     <LayoutDashboard className="w-5 h-5" />
