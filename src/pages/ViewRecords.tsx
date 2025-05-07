@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateTestRecords } from '@/utils/generateTestData';
@@ -101,8 +102,11 @@ Signature: .....................................................................
 
   // Handle PDF export
   const handleExportToPDF = () => {
+    // Get the currently sorted and filtered rows in their current order
+    const sortedFilteredRows = table.getRowModel().rows.map(row => row.original);
+    
     exportToPDF(
-      table.getFilteredRowModel().rows.map(row => row.original), 
+      sortedFilteredRows, 
       columns, 
       columnVisibility, 
       fromDate, 

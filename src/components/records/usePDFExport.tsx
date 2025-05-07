@@ -208,7 +208,7 @@ export const usePDFExport = () => {
         return col.id || '';
       });
 
-      // Only export filtered records
+      // Use the already sorted and filtered records directly
       const tableRows = filteredRecords.map(record => {
         return visibleColumns.map(col => {
           if ('accessorKey' in col) {

@@ -15,6 +15,8 @@ import {
   flexRender, 
   Table as TableType
 } from '@tanstack/react-table';
+import { Filter, ChevronUp, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface RecordsTableProps {
   table: TableType<IVFRecord>;
@@ -38,34 +40,82 @@ const RecordsTable: React.FC<RecordsTableProps> = ({
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              <TableHead className="w-[40px] px-2">
-                <span className="sr-only">Select</span>
-              </TableHead>
-              {headerGroup.headers.map((header) => (
-                <TableHead key={header.id}>
-                  {header.isPlaceholder ? null : (
-                    <div
-                      {...{
-                        className: header.column.getCanSort()
-                          ? 'cursor-pointer select-none flex items-center'
-                          : '',
-                        onClick: header.column.getToggleSortingHandler(),
-                      }}
-                    >
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                      {{
-                        asc: ' 🔼',
-                        desc: ' 🔽',
-                      }[header.column.getIsSorted() as string] ?? null}
-                    </div>
-                  )}
+            <React.Fragment key={headerGroup.id}>
+              <TableRow>
+                <TableHead className="w-[40px] px-2">
+                  <span className="sr-only">Select</span>
                 </TableHead>
-              ))}
-            </TableRow>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder ? null : (
+                      <div
+                        {...{
+                          className: header.column.getCanSort()
+                            ? 'cursor-pointer select-none flex items-center justify-between'
+                            : '',
+                          onClick: header.column.getToggleSortingHandler(),
+                        }}
+                      >
+                        <span>
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                        </span>
+                        {header.column.getCanSort() && (
+                          <div className="ml-2">
+                            {header.column.getIsSorted() === "asc" ? (
+                              <ChevronUp className="w-4 h-4" />
+                            ) : header.column.getIsSorted() === "desc" ? (
+                              <ChevronDown className="w-4 h-4" />
+                            ) : (
+                              <div className="opacity-0 hover:opacity-100 transition-opacity">
+                                <ChevronUp className="w-4 h-4" />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </TableHead>
+                ))}
+              </TableRow>
+              <TableRow>
+                <TableHead className="p-0">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-8 w-8 p-0"
+                    title="Toggle filters"
+                    onClick={() => {
+                      table.getHeaderGroups().forEach(headerGroup => {
+                        headerGroup.headers.forEach(header => {
+                          if (header.column.getCanFilter()) {
+                            const filterValue = header.column.getFilterValue();
+                            if (filterValue) {
+                              header.column.setFilterValue(undefined);
+                            }
+                          }
+                        });
+                      });
+                    }}
+                  >
+                    <Filter className="h-4 w-4" />
+                    <span className="sr-only">Clear filters</span>
+                  </Button>
+                </TableHead>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={`filter-${header.id}`} className="p-1">
+                    {header.column.getCanFilter() && header.column.columnDef.meta?.filterComponent && (
+                      flexRender(
+                        header.column.columnDef.meta.filterComponent,
+                        { column: header.column }
+                      )
+                    )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </React.Fragment>
           ))}
         </TableHeader>
         <TableBody>
