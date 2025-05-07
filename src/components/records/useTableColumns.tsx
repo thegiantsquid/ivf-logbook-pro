@@ -1,5 +1,5 @@
 
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { IVFRecord } from '@/types';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { useRecords } from '@/hooks/useRecords';
+import { supabase } from '@/lib/supabase';
 
 // Define a proper type for our column metadata
 interface ColumnMetaType {
@@ -23,6 +24,10 @@ export const useTableColumns = () => {
   // Access custom procedure and hospital types for the select filters
   const { customProcedureTypes, customHospitalTypes } = useRecords();
   
+  // Add state for uniquely available procedure and hospital types from all records
+  const [allProcedureTypes, setAllProcedureTypes] = useState<string[]>([]);
+  const [allHospitalTypes, setAllHospitalTypes] = useState<string[]>([]);
+  
   // Pre-defined supervision levels
   const supervisionLevels = [
     "Supervised",
@@ -30,6 +35,62 @@ export const useTableColumns = () => {
     "Taught",
     "Assisted"
   ];
+
+  // Fetch unique procedure and hospital types from all records
+  useEffect(() => {
+    const fetchUniqueTypes = async () => {
+      try {
+        // Fetch unique procedure types from records
+        const { data: procedureData, error: procedureError } = await supabase
+          .from('ivf_records')
+          .select('procedure')
+          .not('procedure', 'is', null);
+        
+        if (procedureError) throw procedureError;
+        
+        // Fetch unique hospital types from records
+        const { data: hospitalData, error: hospitalError } = await supabase
+          .from('ivf_records')
+          .select('hospital')
+          .not('hospital', 'is', null);
+        
+        if (hospitalError) throw hospitalError;
+        
+        // Extract unique procedure types
+        const uniqueProcedures = [...new Set(
+          procedureData
+            .map(record => record.procedure)
+            .filter(Boolean)
+        )];
+        
+        // Extract unique hospital types
+        const uniqueHospitals = [...new Set(
+          hospitalData
+            .map(record => record.hospital)
+            .filter(Boolean)
+        )];
+        
+        // Update state with unique types
+        setAllProcedureTypes(uniqueProcedures);
+        setAllHospitalTypes(uniqueHospitals);
+      } catch (error) {
+        console.error('Error fetching unique types:', error);
+      }
+    };
+    
+    fetchUniqueTypes();
+  }, []);
+  
+  // Combine custom types with unique types from records, removing duplicates
+  const combinedProcedureTypes = useMemo(() => {
+    const combined = [...new Set([...customProcedureTypes, ...allProcedureTypes])];
+    return combined.sort();
+  }, [customProcedureTypes, allProcedureTypes]);
+  
+  const combinedHospitalTypes = useMemo(() => {
+    const combined = [...new Set([...customHospitalTypes, ...allHospitalTypes])];
+    return combined.sort();
+  }, [customHospitalTypes, allHospitalTypes]);
 
   const columns: ColumnDef<IVFRecord, any>[] = useMemo(() => [
     {
@@ -93,7 +154,7 @@ export const useTableColumns = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
-              {customProcedureTypes.map((procedure) => (
+              {combinedProcedureTypes.map((procedure) => (
                 <SelectItem key={procedure} value={procedure}>
                   {procedure}
                 </SelectItem>
@@ -145,7 +206,7 @@ export const useTableColumns = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
-              {customHospitalTypes.map((hospital) => (
+              {combinedHospitalTypes.map((hospital) => (
                 <SelectItem key={hospital} value={hospital}>
                   {hospital}
                 </SelectItem>
@@ -165,7 +226,7 @@ export const useTableColumns = () => {
       header: 'Operation Notes',
       cell: ({ row }) => <div className="max-w-[200px] truncate" title={row.getValue('operationNotes')}>{row.getValue('operationNotes') || '-'}</div>,
     }
-  ], [customProcedureTypes, customHospitalTypes]);
+  ], [combinedProcedureTypes, combinedHospitalTypes]);
 
   return columns;
 };
