@@ -102,8 +102,8 @@ Signature: .....................................................................
 
   // Handle PDF export
   const handleExportToPDF = () => {
-    // Get the currently sorted and filtered rows in their current order
-    const sortedFilteredRows = table.getRowModel().rows.map(row => row.original);
+    // Get all filtered and sorted rows
+    const sortedFilteredRows = table.getSortedRowModel().rows.map(row => row.original);
     
     exportToPDF(
       sortedFilteredRows, 
