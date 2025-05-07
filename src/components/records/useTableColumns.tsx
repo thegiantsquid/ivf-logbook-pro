@@ -85,14 +85,14 @@ export const useTableColumns = () => {
       meta: {
         filterComponent: ({ column }: { column: any }) => (
           <Select
-            value={column.getFilterValue() as string || ''}
-            onValueChange={(value) => column.setFilterValue(value !== '' ? value : undefined)}
+            value={column.getFilterValue() as string || 'all'}
+            onValueChange={(value) => column.setFilterValue(value !== 'all' ? value : undefined)}
           >
             <SelectTrigger className="h-8 w-full">
               <SelectValue placeholder="Filter..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All</SelectItem>
+              <SelectItem value="all">All</SelectItem>
               {customProcedureTypes.map((procedure) => (
                 <SelectItem key={procedure} value={procedure}>
                   {procedure}
@@ -111,14 +111,14 @@ export const useTableColumns = () => {
       meta: {
         filterComponent: ({ column }: { column: any }) => (
           <Select
-            value={column.getFilterValue() as string || ''}
-            onValueChange={(value) => column.setFilterValue(value !== '' ? value : undefined)}
+            value={column.getFilterValue() as string || 'all'}
+            onValueChange={(value) => column.setFilterValue(value !== 'all' ? value : undefined)}
           >
             <SelectTrigger className="h-8 w-full">
               <SelectValue placeholder="Filter..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All</SelectItem>
+              <SelectItem value="all">All</SelectItem>
               {supervisionLevels.map((level) => (
                 <SelectItem key={level} value={level}>
                   {level}
@@ -137,14 +137,14 @@ export const useTableColumns = () => {
       meta: {
         filterComponent: ({ column }: { column: any }) => (
           <Select
-            value={column.getFilterValue() as string || ''}
-            onValueChange={(value) => column.setFilterValue(value !== '' ? value : undefined)}
+            value={column.getFilterValue() as string || 'all'}
+            onValueChange={(value) => column.setFilterValue(value !== 'all' ? value : undefined)}
           >
             <SelectTrigger className="h-8 w-full">
               <SelectValue placeholder="Filter..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All</SelectItem>
+              <SelectItem value="all">All</SelectItem>
               {customHospitalTypes.map((hospital) => (
                 <SelectItem key={hospital} value={hospital}>
                   {hospital}
