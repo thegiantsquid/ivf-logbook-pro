@@ -44,7 +44,7 @@ function App() {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 
-                {/* Index route to handle auth redirection */}
+                {/* Default route for authenticated users and redirection */}
                 <Route path="/index" element={<Index />} />
                 
                 {/* Protected routes inside Layout */}
