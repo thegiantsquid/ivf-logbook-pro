@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { X, FileSpreadsheet, Download, CalendarIcon, FileUp, Settings, Loader2 } from 'lucide-react';
+import { X, FileSpreadsheet, Download, CalendarIcon, Settings, Loader2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -54,7 +54,6 @@ const TableFilters: React.FC<TableFiltersProps> = ({
   includeProcedureSummary = false,
   setIncludeProcedureSummary = () => {}
 }) => {
-  const [isFileDialogOpen, setIsFileDialogOpen] = useState(false);
   const [isPdfDialogOpen, setIsPdfDialogOpen] = useState(false);
   
   const hasDateFilter = fromDate || toDate;
@@ -264,70 +263,6 @@ const TableFilters: React.FC<TableFiltersProps> = ({
             </>
           )}
         </Button>
-
-        {/* File Import */}
-        <Dialog open={isFileDialogOpen} onOpenChange={setIsFileDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
-              <FileUp className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Import</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Import Records from Excel</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <p className="text-sm text-muted-foreground">
-                Upload an Excel file containing your IVF procedure records. The file should have columns for MRN, date, age, procedure, supervision, hospital, complication notes, and operation notes.
-              </p>
-              <div>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    // Create template Excel file and trigger download
-                    const templateURL = '/template.xlsx';
-                    const link = document.createElement('a');
-                    link.href = templateURL;
-                    link.download = 'ivf_records_template.xlsx';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                  }}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Template
-                </Button>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="file-upload">Select File</Label>
-                <Input
-                  id="file-upload"
-                  type="file"
-                  accept=".xlsx,.xls"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="secondary" onClick={() => setIsFileDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={() => {
-                  const fileInput = document.getElementById('file-upload') as HTMLInputElement;
-                  if (fileInput?.files?.[0]) {
-                    // Handle file upload here
-                    // TODO: Implement file upload logic
-                    setIsFileDialogOpen(false);
-                  }
-                }}
-              >
-                Upload File
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

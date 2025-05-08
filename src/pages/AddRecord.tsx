@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useRecords } from '@/hooks/useRecords';
@@ -12,9 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/lib/toast';
 import { IVFRecord, ProcedureType, SupervisionType, HospitalType } from '@/types';
-import { FileUp, FilePlus, Plus, FileDown, Download, Lock } from 'lucide-react';
+import { FilePlus, Plus, Download, Lock } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { TrialBanner } from '@/components/subscription/TrialBanner';
+import { useAvailableTypes } from '@/components/records/useTableColumns'; 
 import * as XLSX from 'xlsx';
 
 type FormValues = Omit<IVFRecord, 'id' | 'createdAt' | 'updatedAt' | 'createdBy'>;
@@ -29,6 +30,10 @@ const AddRecord: React.FC = () => {
     addCustomProcedureType,
     addCustomHospitalType
   } = useRecords();
+  
+  // Use the shared hook to get all available procedure and hospital types
+  const { combinedProcedureTypes, combinedHospitalTypes } = useAvailableTypes();
+  
   const {
     isLoading,
     hasActiveSubscription,
@@ -235,7 +240,7 @@ const AddRecord: React.FC = () => {
             {isBulkImportDisabled ? (
               <Lock className="mr-2 h-4 w-4" />
             ) : (
-              <FileUp className="mr-2 h-4 w-4" />
+              <Download className="mr-2 h-4 w-4" />
             )}
             Bulk Import {isBulkImportDisabled && <span className="ml-1 text-xs">(Premium)</span>}
           </TabsTrigger>
@@ -293,7 +298,7 @@ const AddRecord: React.FC = () => {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {customProcedureTypes.map(procedure => <SelectItem key={procedure} value={procedure}>
+                                {combinedProcedureTypes.map(procedure => <SelectItem key={procedure} value={procedure}>
                                     {procedure}
                                   </SelectItem>)}
                               </SelectContent>
@@ -359,7 +364,7 @@ const AddRecord: React.FC = () => {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {customHospitalTypes.map(hospital => <SelectItem key={hospital} value={hospital}>
+                                {combinedHospitalTypes.map(hospital => <SelectItem key={hospital} value={hospital}>
                                     {hospital}
                                   </SelectItem>)}
                               </SelectContent>
@@ -458,7 +463,7 @@ const AddRecord: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg">
-                  <FileUp className="h-12 w-12 text-muted-foreground mb-4" />
+                  <Download className="h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-medium mb-2">Upload Excel File</h3>
                   <p className="text-sm text-muted-foreground mb-4 text-center">
                     Your file should have columns matching the record fields: mrn, date, age, procedure, supervision, etc.
