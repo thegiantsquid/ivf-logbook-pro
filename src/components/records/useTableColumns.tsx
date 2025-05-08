@@ -12,6 +12,9 @@ import {
 } from '@/components/ui/select';
 import { useRecords } from '@/hooks/useRecords';
 import { supabase } from '@/lib/supabase';
+import { Check, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 // Define a proper type for our column metadata
 interface ColumnMetaType {
@@ -142,26 +145,91 @@ export const useTableColumns = () => {
       accessorKey: 'procedure',
       header: 'Procedure',
       cell: ({ row }) => <div>{row.getValue('procedure')}</div>,
-      filterFn: 'equals',
+      filterFn: (row, columnId, filterValues) => {
+        // If no filters selected or "all" is selected, return true
+        if (!filterValues || filterValues.length === 0) {
+          return true;
+        }
+        
+        // Get the value from the row
+        const value = row.getValue(columnId);
+        
+        // Check if the value is in the selected filter values
+        return filterValues.includes(value);
+      },
       meta: {
-        filterComponent: ({ column }: { column: any }) => (
-          <Select
-            value={column.getFilterValue() as string || 'all'}
-            onValueChange={(value) => column.setFilterValue(value !== 'all' ? value : undefined)}
-          >
-            <SelectTrigger className="h-8 w-full">
-              <SelectValue placeholder="Filter..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              {combinedProcedureTypes.map((procedure) => (
-                <SelectItem key={procedure} value={procedure}>
-                  {procedure}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ),
+        filterComponent: ({ column }: { column: any }) => {
+          // Get current filter values (or initialize as empty array)
+          const selectedValues = column.getFilterValue() as string[] || [];
+          
+          // Function to toggle a value in the filter
+          const toggleValue = (value: string) => {
+            const currentValues = column.getFilterValue() as string[] || [];
+            
+            if (currentValues.includes(value)) {
+              // Remove the value if already selected
+              column.setFilterValue(
+                currentValues.filter(v => v !== value)
+              );
+            } else {
+              // Add the value if not already selected
+              column.setFilterValue([...currentValues, value]);
+            }
+          };
+          
+          // Function to clear all selections
+          const clearSelections = () => {
+            column.setFilterValue([]);
+          };
+
+          return (
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-1 min-h-6 mb-1">
+                {selectedValues.length > 0 ? (
+                  selectedValues.map(value => (
+                    <Badge key={value} variant="secondary" className="flex items-center gap-1">
+                      {value}
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => toggleValue(value)}
+                      />
+                    </Badge>
+                  ))
+                ) : (
+                  <div className="text-xs text-muted-foreground">No filters selected</div>
+                )}
+              </div>
+              
+              <div className="max-h-[200px] overflow-y-auto border rounded-md p-1">
+                {combinedProcedureTypes.map((procedure) => (
+                  <div
+                    key={procedure}
+                    className="flex items-center px-2 py-1 hover:bg-muted cursor-pointer text-sm"
+                    onClick={() => toggleValue(procedure)}
+                  >
+                    <div className="w-4 h-4 mr-2 flex items-center justify-center">
+                      {selectedValues.includes(procedure) && (
+                        <Check className="h-3 w-3" />
+                      )}
+                    </div>
+                    {procedure}
+                  </div>
+                ))}
+              </div>
+              
+              {selectedValues.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearSelections}
+                  className="text-xs h-7 mt-1"
+                >
+                  Clear all
+                </Button>
+              )}
+            </div>
+          );
+        },
       } as ColumnMetaType,
     },
     {
@@ -194,26 +262,91 @@ export const useTableColumns = () => {
       accessorKey: 'hospital',
       header: 'Hospital',
       cell: ({ row }) => <div>{row.getValue('hospital')}</div>,
-      filterFn: 'equals',
+      filterFn: (row, columnId, filterValues) => {
+        // If no filters selected or "all" is selected, return true
+        if (!filterValues || filterValues.length === 0) {
+          return true;
+        }
+        
+        // Get the value from the row
+        const value = row.getValue(columnId);
+        
+        // Check if the value is in the selected filter values
+        return filterValues.includes(value);
+      },
       meta: {
-        filterComponent: ({ column }: { column: any }) => (
-          <Select
-            value={column.getFilterValue() as string || 'all'}
-            onValueChange={(value) => column.setFilterValue(value !== 'all' ? value : undefined)}
-          >
-            <SelectTrigger className="h-8 w-full">
-              <SelectValue placeholder="Filter..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              {combinedHospitalTypes.map((hospital) => (
-                <SelectItem key={hospital} value={hospital}>
-                  {hospital}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ),
+        filterComponent: ({ column }: { column: any }) => {
+          // Get current filter values (or initialize as empty array)
+          const selectedValues = column.getFilterValue() as string[] || [];
+          
+          // Function to toggle a value in the filter
+          const toggleValue = (value: string) => {
+            const currentValues = column.getFilterValue() as string[] || [];
+            
+            if (currentValues.includes(value)) {
+              // Remove the value if already selected
+              column.setFilterValue(
+                currentValues.filter(v => v !== value)
+              );
+            } else {
+              // Add the value if not already selected
+              column.setFilterValue([...currentValues, value]);
+            }
+          };
+          
+          // Function to clear all selections
+          const clearSelections = () => {
+            column.setFilterValue([]);
+          };
+
+          return (
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-1 min-h-6 mb-1">
+                {selectedValues.length > 0 ? (
+                  selectedValues.map(value => (
+                    <Badge key={value} variant="secondary" className="flex items-center gap-1">
+                      {value}
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => toggleValue(value)}
+                      />
+                    </Badge>
+                  ))
+                ) : (
+                  <div className="text-xs text-muted-foreground">No filters selected</div>
+                )}
+              </div>
+              
+              <div className="max-h-[200px] overflow-y-auto border rounded-md p-1">
+                {combinedHospitalTypes.map((hospital) => (
+                  <div
+                    key={hospital}
+                    className="flex items-center px-2 py-1 hover:bg-muted cursor-pointer text-sm"
+                    onClick={() => toggleValue(hospital)}
+                  >
+                    <div className="w-4 h-4 mr-2 flex items-center justify-center">
+                      {selectedValues.includes(hospital) && (
+                        <Check className="h-3 w-3" />
+                      )}
+                    </div>
+                    {hospital}
+                  </div>
+                ))}
+              </div>
+              
+              {selectedValues.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearSelections}
+                  className="text-xs h-7 mt-1"
+                >
+                  Clear all
+                </Button>
+              )}
+            </div>
+          );
+        },
       } as ColumnMetaType,
     },
     {
