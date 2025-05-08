@@ -1,4 +1,8 @@
 
+import React, { useState, useEffect, useMemo } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useRecords } from '@/hooks/useRecords';
+
 // Export the combined types so they can be used elsewhere in the app
 export const useAvailableTypes = () => {
   // Access custom procedure and hospital types for the select filters
@@ -68,4 +72,12 @@ export const useAvailableTypes = () => {
     combinedProcedureTypes,
     combinedHospitalTypes
   };
+};
+
+// Add the missing useTableColumns export that ViewRecords.tsx is importing
+export const useTableColumns = () => {
+  // Implementation of useTableColumns
+  // This is where we would add the column definitions
+  // For now, return an empty array as a placeholder
+  return [];
 };
