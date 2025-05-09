@@ -69,7 +69,8 @@ serve(async (req) => {
     });
 
     // Check for existing customer or create new one
-    let customerId: string;
+    let customerId: string = '';
+    let shouldCreateNewCustomer = true;
     
     // First check our database
     const { data: subscription, error: fetchError } = await supabaseAdmin
@@ -84,8 +85,20 @@ serve(async (req) => {
 
     customerId = subscription?.stripe_customer_id || '';
 
-    if (!customerId) {
-      // Check Stripe for existing customer
+    // If we have a customer ID, try to verify it exists in Stripe
+    if (customerId) {
+      try {
+        await stripe.customers.retrieve(customerId);
+        log(`Verified existing Stripe customer: ${customerId}`);
+        shouldCreateNewCustomer = false;
+      } catch (error) {
+        log(`Customer ID ${customerId} not found in Stripe, will create new customer`);
+        shouldCreateNewCustomer = true;
+      }
+    }
+
+    if (shouldCreateNewCustomer) {
+      // Check Stripe for existing customer by email
       const customers = await stripe.customers.list({
         email: user.email,
         limit: 1,
@@ -93,7 +106,7 @@ serve(async (req) => {
 
       if (customers.data.length > 0) {
         customerId = customers.data[0].id;
-        log(`Found existing Stripe customer: ${customerId}`);
+        log(`Found existing Stripe customer by email: ${customerId}`);
       } else {
         // Create new customer
         const newCustomer = await stripe.customers.create({
@@ -106,7 +119,7 @@ serve(async (req) => {
         log(`Created new Stripe customer: ${customerId}`);
       }
 
-      // Upsert customer info to our database
+      // Update our database with the valid customer ID
       const { error: upsertError } = await supabaseAdmin
         .from("user_subscriptions")
         .upsert({
@@ -123,7 +136,6 @@ serve(async (req) => {
 
       if (upsertError) {
         log(`Error upserting subscription record: ${upsertError.message}`);
-        log(`Upsert error details: ${JSON.stringify(upsertError)}`);
       }
     }
 
