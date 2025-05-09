@@ -132,7 +132,7 @@ const Subscribe = () => {
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-primary">£19</span>
+            <span className="text-3xl font-bold text-primary">£9</span>
             <span className="text-card-foreground/70">/month</span>
           </div>
           

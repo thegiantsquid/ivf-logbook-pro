@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import Stripe from "https://esm.sh/stripe@12.18.0?dts";
@@ -139,7 +140,7 @@ serve(async (req) => {
               name: "Professional Plan",
               description: "Advanced features for medical professionals",
             },
-            unit_amount: 1900,
+            unit_amount: 900, // Changed from 1900 (£19) to 900 (£9)
             recurring: {
               interval: "month",
             },

@@ -70,7 +70,7 @@ const SubscriptionManagement = () => {
           <CardContent className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xl font-semibold text-card-foreground">$19/month</span>
+                <span className="text-xl font-semibold text-card-foreground">£9/month</span>
                 <Badge variant="secondary">Professional</Badge>
               </div>
               
