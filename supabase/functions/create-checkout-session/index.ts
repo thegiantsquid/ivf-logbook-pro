@@ -139,6 +139,16 @@ serve(async (req) => {
       }
     }
 
+    // Get price ID from environment variable or use a fallback
+    const priceId = Deno.env.get("STRIPE_PRICE_ID");
+    if (!priceId) {
+      log("STRIPE_PRICE_ID not found");
+      return new Response(
+        JSON.stringify({ error: "Stripe price ID not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
     // Create checkout session
     const origin = req.headers.get("origin") || "http://localhost:5173";
     const session = await stripe.checkout.sessions.create({
@@ -146,17 +156,7 @@ serve(async (req) => {
       payment_method_types: ["card"],
       line_items: [
         {
-          price_data: {
-            currency: "gbp",
-            product_data: {
-              name: "Professional Plan",
-              description: "Advanced features for medical professionals",
-            },
-            unit_amount: 900, // Changed from 1900 (£19) to 900 (£9)
-            recurring: {
-              interval: "month",
-            },
-          },
+          price: priceId,
           quantity: 1,
         },
       ],
